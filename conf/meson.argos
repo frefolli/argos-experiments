@@ -17,19 +17,22 @@
 
   <!-- * Controllers * -->
   <controllers>
-    <eyebot_controller id="ffc" library="builddir/libcontrollers" label="eyebot_controller">
+    <eyebot_controller id="ebc" library="builddir/libcontrollers" label="eyebot_controller">
       <actuators>
-        <position-actuator implementation="default"/>
+        <quadrotor_position implementation="default"/>
+        <range_and_bearing implementation="default"/>
       </actuators>
       <sensors>
+        <positioning implementation="default" />
+        <range_and_bearing implementation="medium" medium="rab" show_rays="true" />
       </sensors>
-      <params max_speed="5.0f">
+      <params>
       </params>
     </eyebot_controller>
   </controllers>
 
   <!-- * Arena configuration * -->
-  <arena size="5, 5, 2" center="0,0,1">
+  <arena size="5, 5, 4" center="0,0,1">
     <floor id="floor"
            source="loop_functions"
            pixels_per_meter="50" />
@@ -70,19 +73,19 @@
            intensity="3.0"
            medium="leds" />
     <distribute>
-      <position method="uniform" min="-2,-2,0" max="-1,2,0" />
+      <position method="uniform" min="-2,-2,0" max="2,2,0" />
       <orientation method="uniform" min="0,0,0" max="360,0,0" />
       <entity quantity="20" max_trials="100">
-        <foot-bot id="fb">
-          <controller config="ffc" />
-        </foot-bot>
+        <eye-bot id="eb">
+          <controller config="ebc" />
+        </eye-bot>
       </entity>
     </distribute>
   </arena>
 
   <!-- * Physics engines * -->
   <physics_engines>
-    <dynamics2d id="dyn2d" />
+    <pointmass3d id="pm3d" />
   </physics_engines>
 
   <!-- * Media * -->
