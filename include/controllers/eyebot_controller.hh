@@ -1,20 +1,16 @@
 #ifndef PREZ_FOOTBOT_HH
 #define PREZ_FOOTBOT_HH
 #include <argos3/core/control_interface/ci_controller.h>
-#include <argos3/plugins/robots/generic/control_interface/ci_differential_steering_actuator.h>
-#include <argos3/plugins/robots/generic/control_interface/ci_leds_actuator.h>
+#include <argos3/plugins/robots/generic/control_interface/ci_quadrotor_position_actuator.h>
+#include <argos3/plugins/robots/generic/control_interface/ci_quadrotor_speed_actuator.h>
 #include <argos3/plugins/robots/generic/control_interface/ci_range_and_bearing_actuator.h>
-#include <argos3/plugins/robots/generic/control_interface/ci_range_and_bearing_sensor.h>
-#include <argos3/plugins/robots/foot-bot/control_interface/ci_footbot_proximity_sensor.h>
-#include <argos3/plugins/robots/foot-bot/control_interface/ci_footbot_light_sensor.h>
-#include <argos3/plugins/robots/foot-bot/control_interface/ci_footbot_motor_ground_sensor.h>
-#include <argos3/core/utility/math/rng.h>
+#include <cmath>
 
 namespace prez {
-  class FootBotController : public argos::CCI_Controller {
+  class EyeBotController : public argos::CCI_Controller {
     public:
-     FootBotController();
-     virtual ~FootBotController() {}
+     EyeBotController();
+     virtual ~EyeBotController() {}
 
      /*
       * This function initializes the controller.
@@ -44,6 +40,10 @@ namespace prez {
       */
      virtual void Destroy() {}
     private:
+      argos::CCI_QuadRotorPositionActuator* position_actuator;
+      argos::CCI_QuadRotorSpeedActuator* speed_actuator;
+      argos::CCI_RangeAndBearingActuator* range_and_bearing_actuator;
+      double_t max_speed;
   };
 }
 #endif
