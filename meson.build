@@ -7,9 +7,13 @@ lua = dependency('lua')
 qt5 = dependency('qt5', modules: ['OpenGL'])
 argos3 = dependency('argos3')
 
+support = library('support', [
+  './src/support/target.cc'
+], include_directories: ['./include'], dependencies: [argos3])
+
 controllers = library('controllers', [
   './src/controllers/spiri_controller.cc'
-], include_directories: ['./include'], dependencies: [lua, argos3])
+], include_directories: ['./include'], dependencies: [lua, argos3], link_with: [support])
 
 #loop_functions = library('loop_functions', [
 #  './src/loop_functions/foraging_loop_functions.cc',

@@ -2,13 +2,14 @@
 #define PREZ_SPIRI_CONTROLLER_HH
 /** @file */
 #include <argos3/core/control_interface/ci_controller.h>
+#include <argos3/core/utility/math/vector3.h>
 #include <argos3/plugins/robots/generic/control_interface/ci_quadrotor_position_actuator.h>
 #include <argos3/plugins/robots/generic/control_interface/ci_range_and_bearing_actuator.h>
 #include <argos3/plugins/robots/generic/control_interface/ci_range_and_bearing_sensor.h>
 #include <argos3/plugins/robots/generic/control_interface/ci_positioning_sensor.h>
 #include <cmath>
-#include <random>
 #include <argos3/core/utility/math/rng.h>
+#include <unordered_map>
 
 namespace prez {
   /** Spiri Controller */
@@ -61,14 +62,21 @@ namespace prez {
 
       /** State enum */
       enum State {
-        START, //
-        VOTING, //
+        VOTING, // Need to vote a squadron
         AT_GROUND,  // Ready to takeoff
         TAKING_OFF, // Reaching Battle Stations
         TAKEN_OFF   // In Formation
       } state;
 
+      /** My ID */
       uint32_t ID;
+
+      /** My Squadron */
+      uint32_t squadron;
+      std::unordered_map<uint32_t, double_t> distances_from_targets;
+      double_t max_distance_from_targets;
+      double_t mean_distance_from_targets;
+      uint32_t voting_session;
   };
 }
 #endif

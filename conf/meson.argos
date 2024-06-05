@@ -27,6 +27,8 @@
         <range_and_bearing implementation="medium" medium="rab" show_rays="false" />
       </sensors>
       <params>
+        <target position="0,0,2" force="5"/>
+        <target position="0,0,3" force="5"/>
       </params>
     </spiri_controller>
   </controllers>
@@ -52,7 +54,7 @@
       <position method="uniform" min="-15,-15,0" max="15,15,0" />
       <orientation method="uniform" min="0,0,0" max="360,0,0" />
       <entity quantity="20" max_trials="0">
-        <spiri id="sp" rab_range="10000" rab_data_size="112">
+        <spiri id="sp" rab_range="1000000" rab_data_size="112">
           <controller config="spc" />
         </spiri>
       </entity>
@@ -66,7 +68,7 @@
 
   <!-- * Media * -->
   <media>
-    <range_and_bearing id="rab" />
+    <range_and_bearing id="rab" check_occlusions="false"/>
   </media>
 
   <!-- * Visualization * -->
