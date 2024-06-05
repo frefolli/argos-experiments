@@ -50,11 +50,7 @@ void prez::SpiriController::Init(argos::TConfigurationNode& t_node) {
       targets->push_back(target);
       child = t_node.IterateChildren(child);
     }
-    for (prez::Target& target : *targets) {
-      std::cout << ToString(target.position) << std::endl;
-    }
   }
-
 
   position_actuator = GetActuator<argos::CCI_QuadRotorPositionActuator>("quadrotor_position");
   range_and_bearing_actuator = GetActuator<argos::CCI_RangeAndBearingActuator>("range_and_bearing");
@@ -68,6 +64,7 @@ void prez::SpiriController::Init(argos::TConfigurationNode& t_node) {
 void prez::SpiriController::ControlStep() {
   switch (state) {
     case State::VOTING: {
+      std::vector<prez::Target>* targets = prez::GetTargetList();
       std::unordered_map<uint32_t, uint32_t> formations;
       const argos::CCI_RangeAndBearingSensor::TReadings neighbours = range_and_bearing_sensor->GetReadings();
       // std::cout << ID << " senses " << neighbours.size() << " neighbours" << std::endl;
@@ -76,14 +73,11 @@ void prez::SpiriController::ControlStep() {
       }
       ++formations[squadron];
 
-      std::vector<prez::Target>* targets = prez::GetTargetList();
-      bool balanced = true;
       if (formations[squadron] >= targets->at(squadron).force) {
         for (auto target : formations) {
-          std::cout << ID << " reads that " << target.first << " is #" << target.second << std::endl;
+          // std::cout << ID << " reads that " << target.first << " is #" << target.second << std::endl;
           if (target.first != squadron) {
             if (target.second < targets->at(target.first).force) {
-              balanced = false;
               double_t reassignment_probability = 1 - (distances_from_targets[target.first] / max_distance_from_targets);
               bool reassign = random_number_generator->Bernoulli(reassignment_probability);
               if (reassign) {
@@ -95,20 +89,17 @@ void prez::SpiriController::ControlStep() {
               double_t reassignment_probability = 1 - ((double_t)targets->at(squadron).force / formations[squadron]);
               bool reassign = random_number_generator->Bernoulli(reassignment_probability);
               if (reassign) {
-                balanced = false;
                 squadron = target.first;
                 break;
               }
             }
           }
         }
-      } else {
-        balanced = false;
       }
 
-      if (balanced || voting_session > MAX_VOTING_SESSIONS) {
+      if (voting_session > MAX_VOTING_SESSIONS) {
         state = State::AT_GROUND;
-        std::cout << ID << " i want to go to " << ToString(targets->at(squadron).position) << std::endl;
+        std::cout << ID << " i want to go to " << squadron << std::endl;
       } else {
         ++voting_session;
       }
@@ -117,7 +108,7 @@ void prez::SpiriController::ControlStep() {
       uint32_t waiting_queue = 0;
       const argos::CCI_RangeAndBearingSensor::TReadings neighbours = range_and_bearing_sensor->GetReadings();
       for (argos::CCI_RangeAndBearingSensor::SPacket neighbour : neighbours) {
-        if (neighbour.Data[KEY_ID] > ID && neighbour.Data[KEY_STATE] != State::TAKEN_OFF) {
+        if (neighbour.Data[KEY_SQUADRON] == squadron && neighbour.Data[KEY_ID] > ID && neighbour.Data[KEY_STATE] != State::TAKEN_OFF) {
           waiting_queue++;
         }
       }
@@ -134,10 +125,11 @@ void prez::SpiriController::ControlStep() {
     }; break;
     case State::TAKING_OFF: {
       // If i left 2.0f meters above ground i can consider myself taken off
-      // I maintain current heading target
+      // I set and maintain current heading target
       argos::CVector3 current_position = positioning_sensor->GetReading().Position;
       if (current_position.GetZ() >= 2.0f) {
         state = State::TAKEN_OFF;
+        position_actuator->SetAbsolutePosition(prez::GetTargetList()->at(squadron).position);
       }
     }; break;
     case State::TAKEN_OFF: {

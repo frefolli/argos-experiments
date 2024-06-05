@@ -27,8 +27,10 @@
         <range_and_bearing implementation="medium" medium="rab" show_rays="false" />
       </sensors>
       <params>
-        <target position="0,0,2" force="5"/>
-        <target position="0,0,3" force="5"/>
+        <target position="-10,-10,3" force="5"/>
+        <target position="10,-10,3" force="5"/>
+        <target position="-10,10,3" force="5"/>
+        <target position="10,10,3" force="5"/>
       </params>
     </spiri_controller>
   </controllers>
