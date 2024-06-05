@@ -61,8 +61,14 @@ namespace prez {
 
       /** State enum */
       enum State {
-        AT_GROUND = 0, TAKING_OFF, TAKEN_OFF
+        START, //
+        VOTING, //
+        AT_GROUND,  // Ready to takeoff
+        TAKING_OFF, // Reaching Battle Stations
+        TAKEN_OFF   // In Formation
       } state;
+
+      uint32_t ID;
   };
 }
 #endif

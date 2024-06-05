@@ -2,13 +2,16 @@
 #include <controllers/spiri_controller.hh>
 #include <argos3/core/utility/configuration/argos_configuration.h>
 #include <iostream>
+#define KEY_STATE 0
+#define KEY_ID 1
 
 prez::SpiriController::SpiriController() :
   position_actuator(nullptr),
   range_and_bearing_actuator(nullptr),
   range_and_bearing_sensor(nullptr),
   positioning_sensor(nullptr),
-  random_number_generator(nullptr)
+  random_number_generator(nullptr),
+  ID(-1)
   {}
 
 void prez::SpiriController::Init(argos::TConfigurationNode& t_node) {
@@ -24,29 +27,22 @@ void prez::SpiriController::Init(argos::TConfigurationNode& t_node) {
 void prez::SpiriController::ControlStep() {
   switch (state) {
     case State::AT_GROUND: {
-      uint32_t count_taking_off = 0;
-      uint32_t count_taken_off = 0;
+      uint32_t waiting_queue = 0;
       const argos::CCI_RangeAndBearingSensor::TReadings neighbours = range_and_bearing_sensor->GetReadings();
       for (argos::CCI_RangeAndBearingSensor::SPacket neighbour : neighbours) {
-        if (neighbour.Data[0] == State::TAKING_OFF) {
-          count_taking_off++;
-        } else if (neighbour.Data[0] == State::TAKEN_OFF) {
-          count_taken_off++;
+        if (neighbour.Data[KEY_ID] > ID && neighbour.Data[KEY_STATE] != State::TAKEN_OFF) {
+          waiting_queue++;
         }
       }
 
-      if (count_taking_off == 0) {
-        // Probabilistic backoff, P(take_off) = (count_taken_off+1) / (neighbours.size())
-        if (random_number_generator->Bernoulli((double_t)(count_taken_off+1) / (neighbours.size()))) {
-          // Set target position at above 3.0f meters
-          argos::CVector3 current_position = positioning_sensor->GetReading().Position;
-          argos::CVector3 target_position = current_position;
-          target_position.SetZ(3.0f);
-          position_actuator->SetAbsolutePosition(target_position);
-          
-          // Set state as TAKING_OFF
-          state = State::TAKING_OFF;
-        }
+      if (waiting_queue == 0) {
+        argos::CVector3 current_position = positioning_sensor->GetReading().Position;
+        argos::CVector3 target_position = current_position;
+        target_position.SetZ(3.0f);
+        position_actuator->SetAbsolutePosition(target_position);
+        
+        // Set state as TAKING_OFF
+        state = State::TAKING_OFF;
       }
     }; break;
     case State::TAKING_OFF: {
@@ -61,11 +57,15 @@ void prez::SpiriController::ControlStep() {
       // Idle
     }; break;
   }
-  range_and_bearing_actuator->SetData(0, state);
+  range_and_bearing_actuator->SetData(KEY_STATE, state);
+  range_and_bearing_actuator->SetData(KEY_ID, ID);
 }
 
 void prez::SpiriController::Reset() {
   state = State::AT_GROUND;
+  ID = std::stoi(GetId().substr(2));
+  range_and_bearing_actuator->SetData(KEY_STATE, state);
+  range_and_bearing_actuator->SetData(KEY_ID, ID);
 }
 
 using namespace prez;
