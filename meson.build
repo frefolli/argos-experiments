@@ -8,7 +8,7 @@ qt5 = dependency('qt5', modules: ['OpenGL'])
 argos3 = dependency('argos3')
 
 controllers = library('controllers', [
-  './src/controllers/eyebot_controller.cc'
+  './src/controllers/spiri_controller.cc'
 ], include_directories: ['./include'], dependencies: [lua, argos3])
 
 #loop_functions = library('loop_functions', [

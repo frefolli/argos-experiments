@@ -17,7 +17,7 @@
 
   <!-- * Controllers * -->
   <controllers>
-    <eyebot_controller id="ebc" library="builddir/libcontrollers" label="eyebot_controller">
+    <spiri_controller id="ebc" library="builddir/libcontrollers" label="spiri_controller">
       <actuators>
         <quadrotor_position implementation="default"/>
         <range_and_bearing implementation="default"/>
@@ -28,7 +28,7 @@
       </sensors>
       <params>
       </params>
-    </eyebot_controller>
+    </spiri_controller>
   </controllers>
 
   <!-- * Arena configuration * -->
@@ -76,9 +76,9 @@
       <position method="uniform" min="-2,-2,0" max="2,2,0" />
       <orientation method="uniform" min="0,0,0" max="360,0,0" />
       <entity quantity="20" max_trials="100">
-        <eye-bot id="eb">
+        <spiri id="eb" rab_range="100">
           <controller config="ebc" />
-        </eye-bot>
+        </spiri>
       </entity>
     </distribute>
   </arena>
