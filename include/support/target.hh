@@ -2,6 +2,7 @@
 #define PREZ_SUPPORT_TARGET_HH
 #include <argos3/core/utility/math/vector3.h>
 #include <cstdint>
+#include <ostream>
 
 namespace prez {
   struct Target {
@@ -11,4 +12,6 @@ namespace prez {
 
   std::vector<Target>* GetTargetList();
 }
+
+std::ostream& operator<<(std::ostream& out, prez::Target&);
 #endif//PREZ_SUPPORT_TARGET_HH

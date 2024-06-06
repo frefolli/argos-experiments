@@ -25,6 +25,7 @@
       <sensors>
         <positioning implementation="default" />
         <range_and_bearing implementation="medium" medium="rab" show_rays="false" />
+        <proximity implementation="default" />
       </sensors>
       <params>
       </params>
@@ -66,6 +67,7 @@
       <entity quantity="20" max_trials="0">
         <spiri id="sp" rab_range="1000000" rab_data_size="112">
           <controller config="spc" />
+          <body orientation="0,0,0" />
         </spiri>
       </entity>
     </distribute>

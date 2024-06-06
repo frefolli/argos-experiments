@@ -7,6 +7,7 @@
 #include <argos3/plugins/robots/generic/control_interface/ci_range_and_bearing_actuator.h>
 #include <argos3/plugins/robots/generic/control_interface/ci_range_and_bearing_sensor.h>
 #include <argos3/plugins/robots/generic/control_interface/ci_positioning_sensor.h>
+#include <argos3/plugins/robots/generic/control_interface/ci_proximity_sensor.h>
 #include <cmath>
 #include <argos3/core/utility/math/rng.h>
 #include <unordered_map>
@@ -37,6 +38,9 @@ namespace prez {
       
       /** Read current spiri position */
       argos::CCI_PositioningSensor* positioning_sensor;
+      
+      /** Read current spiri proximity */
+      argos::CCI_ProximitySensor* proximity_sensor;
       
       /**  Random Number Generator */
       argos::CRandom::CRNG* random_number_generator;

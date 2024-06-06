@@ -39,6 +39,7 @@ void prez::LoopFunction::InitializeTargets() {
     new_target.position.SetY(random_number_generator->Uniform(position_Y_distribution));
     new_target.position.SetZ(random_number_generator->Uniform(position_Z_distribution));
     new_target.force = random_number_generator->Uniform(force_distribution);
+    std::cout << "nuovo target: " << new_target << std::endl;
     targets->push_back(new_target);
   }
 }

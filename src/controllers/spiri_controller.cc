@@ -18,6 +18,7 @@ prez::SpiriController::SpiriController() :
   range_and_bearing_sensor(nullptr),
   positioning_sensor(nullptr),
   random_number_generator(nullptr),
+  proximity_sensor(nullptr),
   ID(-1)
   {}
 
@@ -26,6 +27,7 @@ void prez::SpiriController::Init(argos::TConfigurationNode& t_node) {
   range_and_bearing_actuator = GetActuator<argos::CCI_RangeAndBearingActuator>("range_and_bearing");
   range_and_bearing_sensor = GetSensor<argos::CCI_RangeAndBearingSensor>("range_and_bearing");
   positioning_sensor = GetSensor<argos::CCI_PositioningSensor>("positioning");
+  proximity_sensor = GetSensor<argos::CCI_ProximitySensor>("proximity");
 
   random_number_generator = argos::CRandom::CreateRNG("argos");
   Reset();
