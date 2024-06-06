@@ -67,7 +67,6 @@
       <entity quantity="20" max_trials="0">
         <eye-bot id="sp" rab_range="1000000" rab_data_size="112">
           <controller config="spc" />
-          <body orientation="0,0,0" />
         </eye-bot>
       </entity>
     </distribute>

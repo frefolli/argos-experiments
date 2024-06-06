@@ -45,7 +45,7 @@ void prez::SpiriController::DoStart() {
     max_distance_from_squadrons = 0.0f;
     argos::CVector3 position = positioning_sensor->GetReading().Position;
     for (uint32_t index = 0; index < squadrons->size(); ++index) {
-      distances_from_squadrons[index] = prez::Distance(position, squadrons->at(index).position);
+      distances_from_squadrons[index] = (position - squadrons->at(index).position).Length();
       mean_distance_from_squadrons += distances_from_squadrons[index];
       max_distance_from_squadrons = std::max(max_distance_from_squadrons, distances_from_squadrons[index]);
     }
@@ -68,7 +68,9 @@ void prez::SpiriController::DoVoting() {
 
   if (formations[squadron] >= squadrons->at(squadron).force) {
     for (auto formation : formations) {
-      // std::cout << ID << " reads that " << squadron.first << " is #" << squadron.second << std::endl;
+      /*if (ID == 1) {
+        std::cerr << ID << " reads that " << formation.first << " is #" << formation.second << std::endl;
+      }*/
       if (formation.first != squadron) {
         if (formation.second < squadrons->at(formation.first).force) {
           double_t reassignment_probability = 1 - (distances_from_squadrons[formation.first] / max_distance_from_squadrons);
@@ -77,7 +79,7 @@ void prez::SpiriController::DoVoting() {
             squadron = formation.first;
             break;
           }
-        } else if (distances_from_squadrons[squadron] > mean_distance_from_squadrons
+        }/* else if (distances_from_squadrons[squadron] > mean_distance_from_squadrons
                 && distances_from_squadrons[formation.first] < mean_distance_from_squadrons) {
           double_t reassignment_probability = 1 - ((double_t)squadrons->at(squadron).force / formations[squadron]);
           bool reassign = random_number_generator->Bernoulli(reassignment_probability);
@@ -85,7 +87,7 @@ void prez::SpiriController::DoVoting() {
             squadron = formation.first;
             break;
           }
-        }
+        }*/
       }
     }
   }
@@ -128,20 +130,30 @@ void prez::SpiriController::DoTakingOff() {
 }
 
 void prez::SpiriController::DoTakenOff() {
-  position_actuator->SetAbsolutePosition(prez::GetSquadronList()->at(squadron).position);
-  /*
+  // position_actuator->SetAbsolutePosition(prez::GetSquadronList()->at(squadron).position);
+  
   argos::CVector3 direction(0.0f, 0.0f, 0.0f);
   direction += ApproachSquadron();
   // direction += AvoidObstacles();
-  position_actuator->SetRelativePosition(argos::CVector3(direction.GetX(), direction.GetY(), 0.0f));
-  */
+  position_actuator->SetRelativePosition(
+    argos::CVector3(
+      direction.GetX(),
+      direction.GetY(),
+      0.0f
+    )
+  );
 }
 
 argos::CVector3 prez::SpiriController::ApproachSquadron() {
   argos::CVector3 current_position = positioning_sensor->GetReading().Position;
-  argos::CVector3 direction = prez::GetSquadronList()->at(squadron).position - current_position;
-  direction = direction.Normalize();
-  return direction * 0.1f;
+  argos::CQuaternion current_orientation = positioning_sensor->GetReading().Orientation;
+
+  argos::CVector3 local_direction = prez::GetSquadronList()->at(squadron).position - current_position;
+  argos::CQuaternion middle(0.0f, local_direction.GetX(), local_direction.GetY(), local_direction.GetZ());
+  argos::CQuaternion rotated = current_orientation.Inverse() * middle * current_orientation;
+
+  argos::CVector3 relative_direction(rotated.GetX(), rotated.GetY(), rotated.GetZ());
+  return relative_direction * 0.1f;
 }
 
 argos::CVector3 prez::SpiriController::AvoidObstacles() {
