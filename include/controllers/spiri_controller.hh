@@ -17,31 +17,12 @@ namespace prez {
     public:
      SpiriController();
      virtual ~SpiriController() {}
-
-     /*
-      * This function initializes the controller.
-      * The 't_node' variable points to the <parameters> section in the XML file in the <controllers><footbot_foraging_controller> section.
-      */
+     
      virtual void Init(argos::TConfigurationNode& t_node);
-
-     /*
-      * This function is called once every time step.
-      * The length of the time step is set in the XML file.
-      */
      virtual void ControlStep();
-
-     /*
-      * This function resets the controller to its state right after the Init().
-      * It is called when you press the reset button in the GUI.
-      */
      virtual void Reset();
-
-     /*
-      * Called to cleanup what done by Init() when the experiment finishes.
-      * In this example controller there is no need for clean anything up, so the function could have been omitted.
-      * It's here just for completeness.
-      */
      virtual void Destroy() {}
+     
     private:
       /** Move the spiri to a target position
        * For some reason you can have either a position_actuator or a speed_actuator, not both.
@@ -59,9 +40,16 @@ namespace prez {
       
       /**  Random Number Generator */
       argos::CRandom::CRNG* random_number_generator;
+      
+      void DoStart();
+      void DoVoting();
+      void DoAtGround();
+      void DoTakingOff();
+      void DoTakenOff();
 
       /** State enum */
       enum State {
+        START, // Acquire targets and a squadron
         VOTING, // Need to vote a squadron
         AT_GROUND,  // Ready to takeoff
         TAKING_OFF, // Reaching Battle Stations

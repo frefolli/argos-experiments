@@ -15,7 +15,6 @@ controllers = library('controllers', [
   './src/controllers/spiri_controller.cc'
 ], include_directories: ['./include'], dependencies: [lua, argos3], link_with: [support])
 
-#loop_functions = library('loop_functions', [
-#  './src/loop_functions/foraging_loop_functions.cc',
-#  './src/loop_functions/foraging_qt_user_functions.cc'
-#], include_directories: ['./include'], dependencies: [lua, qt5, argos3], link_with: [controllers])
+loop_functions = library('loop_functions', [
+  './src/loop_functions/loop_function.cc',
+], include_directories: ['./include'], dependencies: [lua, qt5, argos3], link_with: [controllers, support])
