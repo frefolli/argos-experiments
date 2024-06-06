@@ -35,12 +35,12 @@
   <!-- * Loop Functions * -->
   <loop_functions library="builddir/libloop_functions"
                   label="loop_function">
-    <targets
+    <squadrons
       minimum_position="-10,-10,2"
       maximum_position="10,10,4"
       minimum_force="4"
       maximum_force="8"
-      number_of_targets="4"
+      number_of_squadrons="4"
     />
   </loop_functions>
 
@@ -65,10 +65,10 @@
       <position method="uniform" min="-15,-15,0" max="15,15,0" />
       <orientation method="uniform" min="0,0,0" max="360,0,0" />
       <entity quantity="20" max_trials="0">
-        <spiri id="sp" rab_range="1000000" rab_data_size="112">
+        <eye-bot id="sp" rab_range="1000000" rab_data_size="112">
           <controller config="spc" />
           <body orientation="0,0,0" />
-        </spiri>
+        </eye-bot>
       </entity>
     </distribute>
   </arena>

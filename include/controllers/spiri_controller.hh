@@ -25,7 +25,7 @@ namespace prez {
      virtual void Destroy() {}
      
     private:
-      /** Move the spiri to a target position
+      /** Move the spiri to a squadron position
        * For some reason you can have either a position_actuator or a speed_actuator, not both.
       */
       argos::CCI_QuadRotorPositionActuator* position_actuator;
@@ -51,9 +51,12 @@ namespace prez {
       void DoTakingOff();
       void DoTakenOff();
 
+      argos::CVector3 ApproachSquadron();
+      argos::CVector3 AvoidObstacles();
+
       /** State enum */
       enum State {
-        START, // Acquire targets and a squadron
+        START, // Acquire squadrons and a squadron
         VOTING, // Need to vote a squadron
         AT_GROUND,  // Ready to takeoff
         TAKING_OFF, // Reaching Battle Stations
@@ -65,9 +68,9 @@ namespace prez {
 
       /** My Squadron */
       uint32_t squadron;
-      std::unordered_map<uint32_t, double_t> distances_from_targets;
-      double_t max_distance_from_targets;
-      double_t mean_distance_from_targets;
+      std::unordered_map<uint32_t, double_t> distances_from_squadrons;
+      double_t max_distance_from_squadrons;
+      double_t mean_distance_from_squadrons;
       uint32_t voting_session;
   };
 }

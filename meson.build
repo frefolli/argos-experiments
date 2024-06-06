@@ -8,7 +8,7 @@ qt5 = dependency('qt5', modules: ['OpenGL'])
 argos3 = dependency('argos3')
 
 support = library('support', [
-  './src/support/target.cc'
+  './src/support/squadrons.cc'
 ], include_directories: ['./include'], dependencies: [argos3])
 
 controllers = library('controllers', [
