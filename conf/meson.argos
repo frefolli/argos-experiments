@@ -12,7 +12,7 @@
     <system threads="0" />
     <experiment length="0"
                 ticks_per_second="10"
-                random_seed="123" />
+                random_seed="1717" />
   </framework>
 
   <!-- * Controllers * -->
@@ -25,7 +25,6 @@
       <sensors>
         <positioning implementation="default" />
         <range_and_bearing implementation="medium" medium="rab" show_rays="false" />
-        <proximity implementation="default" />
       </sensors>
       <params>
       </params>
@@ -37,37 +36,22 @@
                   label="loop_function">
     <squadrons
       minimum_position="-10,-10,2"
-      maximum_position="10,10,4"
-      minimum_force="4"
-      maximum_force="8"
+      maximum_position="10,10,3"
+      minimum_force="5"
+      maximum_force="7"
       number_of_squadrons="4"
     />
   </loop_functions>
 
   <!-- * Arena configuration * -->
-  <arena size="30, 30, 4" center="0,0,1">
-    <floor id="floor"
-           source="loop_functions"
-           pixels_per_meter="50" />
-    <box id="wall_north" size="14,0.1,0.5" movable="false">
-      <body position="0,15,0" orientation="0,0,0" />
-    </box>
-    <box id="wall_south" size="14,0.1,0.5" movable="false">
-      <body position="0,-15,0" orientation="0,0,0" />
-    </box>
-    <box id="wall_east" size="0.1,14,0.5" movable="false">
-      <body position="15,0,0" orientation="0,0,0" />
-    </box>
-    <box id="wall_west" size="0.1,14,0.5" movable="false">
-      <body position="-15,0,0" orientation="0,0,0" />
-    </box>
+  <arena size="20, 20, 9" center="0,0,0">
     <distribute>
-      <position method="uniform" min="-15,-15,0" max="15,15,0" />
+      <position method="uniform" min="-10,-10,0" max="10,10,0" />
       <orientation method="uniform" min="0,0,0" max="360,0,0" />
-      <entity quantity="20" max_trials="0">
-        <eye-bot id="sp" rab_range="1000000" rab_data_size="112">
+      <entity quantity="30" max_trials="10">
+        <spiri id="sp" rab_range="100000" rab_data_size="112">
           <controller config="spc" />
-        </eye-bot>
+        </spiri>
       </entity>
     </distribute>
   </arena>

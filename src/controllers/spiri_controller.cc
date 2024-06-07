@@ -7,17 +7,18 @@
 #include <string>
 #include <support/squadrons.hh>
 #include <support/vectors.hh>
-#define KEY_STATE 0
-#define KEY_ID 1
-#define KEY_SQUADRON 2
-#define MAX_VOTING_SESSIONS 100
+
+constexpr uint32_t KEY_STATE = 0;
+constexpr uint32_t KEY_ID = 1;
+constexpr uint32_t KEY_SQUADRON = 2;
+constexpr uint32_t MAX_VOTING_SESSIONS = 20;
+constexpr double_t MAX_COLLISION_AVOIDANCE_DISTANCE = 1000.0f;;
 
 prez::SpiriController::SpiriController() :
   position_actuator(nullptr),
   range_and_bearing_actuator(nullptr),
   range_and_bearing_sensor(nullptr),
   positioning_sensor(nullptr),
-  proximity_sensor(nullptr),
   random_number_generator(nullptr),
   ID(-1)
   {}
@@ -27,7 +28,6 @@ void prez::SpiriController::Init(argos::TConfigurationNode& /* t_node */) {
   range_and_bearing_actuator = GetActuator<argos::CCI_RangeAndBearingActuator>("range_and_bearing");
   range_and_bearing_sensor = GetSensor<argos::CCI_RangeAndBearingSensor>("range_and_bearing");
   positioning_sensor = GetSensor<argos::CCI_PositioningSensor>("positioning");
-  proximity_sensor = GetSensor<argos::CCI_ProximitySensor>("proximity");
 
   random_number_generator = argos::CRandom::CreateRNG("argos");
   Reset();
@@ -104,8 +104,10 @@ void prez::SpiriController::DoAtGround() {
   uint32_t waiting_queue = 0;
   const argos::CCI_RangeAndBearingSensor::TReadings neighbours = range_and_bearing_sensor->GetReadings();
   for (argos::CCI_RangeAndBearingSensor::SPacket neighbour : neighbours) {
-    if (neighbour.Data[KEY_SQUADRON] == squadron && neighbour.Data[KEY_ID] > ID && neighbour.Data[KEY_STATE] != State::TAKEN_OFF) {
-      waiting_queue++;
+    if (neighbour.Range < MAX_COLLISION_AVOIDANCE_DISTANCE) {
+      if (neighbour.Data[KEY_ID] > ID && neighbour.Data[KEY_STATE] != State::TAKEN_OFF) {
+        waiting_queue++;
+      }
     }
   }
 
@@ -114,8 +116,6 @@ void prez::SpiriController::DoAtGround() {
     argos::CVector3 squadron_position = current_position;
     squadron_position.SetZ(3.0f);
     position_actuator->SetAbsolutePosition(squadron_position);
-    
-    // Set state as TAKING_OFF
     state = State::TAKING_OFF;
   }
 }
@@ -130,42 +130,33 @@ void prez::SpiriController::DoTakingOff() {
 }
 
 void prez::SpiriController::DoTakenOff() {
-  // position_actuator->SetAbsolutePosition(prez::GetSquadronList()->at(squadron).position);
-  
   argos::CVector3 direction(0.0f, 0.0f, 0.0f);
   direction += ApproachSquadron();
   // direction += AvoidObstacles();
-  direction.SetZ(1.0f);
-
-  if (ID == 1) {
-    argos::CQuaternion current_orientation = positioning_sensor->GetReading().Orientation;
-    argos::CVector3 current_position = positioning_sensor->GetReading().Position;
-    auto target_position = prez::GetSquadronList()->at(squadron).position;
-    std::cerr << "I'm at " << ToString(current_position) << " and i want to go to " << ToString(target_position);
-    auto heading = direction;
-    heading.Rotate(current_orientation);
-    std::cerr << " so i'm moving of " << ToString(direction) << " that hopefully is a global movement of " << ToString(heading) << std::endl;
-  }
 
   position_actuator->SetRelativePosition(direction);
 }
 
 argos::CVector3 prez::SpiriController::ApproachSquadron() {
-  argos::CVector3 current_position = positioning_sensor->GetReading().Position;
-  argos::CQuaternion current_orientation = positioning_sensor->GetReading().Orientation;
-  argos::CVector3 local_direction = prez::GetSquadronList()->at(squadron).position - current_position;
-  
-  argos::CVector3 copy1 = local_direction;
-  argos::CVector3 copy2 = local_direction;
-  copy2 = copy2.Rotate(current_orientation.Inverse());
-  assert(copy1 == copy2.Rotate(current_orientation));
-  
-  argos::CVector3 result = local_direction.Rotate(current_orientation.Inverse()).Normalize() * 0.1f;
-  return result;
+  argos::CVector3 position = positioning_sensor->GetReading().Position;
+  argos::CQuaternion orientation = positioning_sensor->GetReading().Orientation;
+  argos::CVector3& target_position = prez::GetSquadronList()->at(squadron).position;
+  argos::CVector3 direction = target_position - position;
+  double_t Z = direction.GetZ();
+  direction = direction.Rotate(orientation.Inverse());
+  direction.SetZ(Z);
+  direction.Normalize();
+  return direction;
 }
 
 argos::CVector3 prez::SpiriController::AvoidObstacles() {
   argos::CVector3 direction(0.0f, 0.0f, 0.0f);
+  const argos::CCI_RangeAndBearingSensor::TReadings neighbours = range_and_bearing_sensor->GetReadings();
+  for (argos::CCI_RangeAndBearingSensor::SPacket neighbour : neighbours) {
+    if (neighbour.Range < MAX_COLLISION_AVOIDANCE_DISTANCE) {
+      
+    }
+  }
   return direction;
 }
 
