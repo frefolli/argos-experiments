@@ -135,7 +135,7 @@ void prez::SpiriController::DoTakenOff() {
   argos::CVector3 direction(0.0f, 0.0f, 0.0f);
   direction += ApproachSquadron();
   // direction += AvoidObstacles();
-  direction.SetZ(0.0f);
+  direction.SetZ(1.0f);
 
   if (ID == 1) {
     argos::CQuaternion current_orientation = positioning_sensor->GetReading().Orientation;
@@ -154,7 +154,14 @@ argos::CVector3 prez::SpiriController::ApproachSquadron() {
   argos::CVector3 current_position = positioning_sensor->GetReading().Position;
   argos::CQuaternion current_orientation = positioning_sensor->GetReading().Orientation;
   argos::CVector3 local_direction = prez::GetSquadronList()->at(squadron).position - current_position;
-  return local_direction.Rotate(current_orientation.Inverse()).Normalize() * 0.1f;
+  
+  argos::CVector3 copy1 = local_direction;
+  argos::CVector3 copy2 = local_direction;
+  copy2 = copy2.Rotate(current_orientation.Inverse());
+  assert(copy1 == copy2.Rotate(current_orientation));
+  
+  argos::CVector3 result = local_direction.Rotate(current_orientation.Inverse()).Normalize() * 0.1f;
+  return result;
 }
 
 argos::CVector3 prez::SpiriController::AvoidObstacles() {
