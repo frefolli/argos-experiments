@@ -135,25 +135,26 @@ void prez::SpiriController::DoTakenOff() {
   argos::CVector3 direction(0.0f, 0.0f, 0.0f);
   direction += ApproachSquadron();
   // direction += AvoidObstacles();
-  position_actuator->SetRelativePosition(
-    argos::CVector3(
-      direction.GetX(),
-      direction.GetY(),
-      0.0f
-    )
-  );
+  direction.SetZ(0.0f);
+
+  if (ID == 1) {
+    argos::CQuaternion current_orientation = positioning_sensor->GetReading().Orientation;
+    argos::CVector3 current_position = positioning_sensor->GetReading().Position;
+    auto target_position = prez::GetSquadronList()->at(squadron).position;
+    std::cerr << "I'm at " << ToString(current_position) << " and i want to go to " << ToString(target_position);
+    auto heading = direction;
+    heading.Rotate(current_orientation);
+    std::cerr << " so i'm moving of " << ToString(direction) << " that hopefully is a global movement of " << ToString(heading) << std::endl;
+  }
+
+  position_actuator->SetRelativePosition(direction);
 }
 
 argos::CVector3 prez::SpiriController::ApproachSquadron() {
   argos::CVector3 current_position = positioning_sensor->GetReading().Position;
   argos::CQuaternion current_orientation = positioning_sensor->GetReading().Orientation;
-
   argos::CVector3 local_direction = prez::GetSquadronList()->at(squadron).position - current_position;
-  argos::CQuaternion middle(0.0f, local_direction.GetX(), local_direction.GetY(), local_direction.GetZ());
-  argos::CQuaternion rotated = current_orientation.Inverse() * middle * current_orientation;
-
-  argos::CVector3 relative_direction(rotated.GetX(), rotated.GetY(), rotated.GetZ());
-  return relative_direction * 0.1f;
+  return local_direction.Rotate(current_orientation.Inverse()).Normalize() * 0.1f;
 }
 
 argos::CVector3 prez::SpiriController::AvoidObstacles() {
