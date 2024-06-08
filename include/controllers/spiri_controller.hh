@@ -10,6 +10,7 @@
 #include <cmath>
 #include <argos3/core/utility/math/rng.h>
 #include <unordered_map>
+#include <fstream>
 
 namespace prez {
   /** Spiri Controller */
@@ -21,7 +22,7 @@ namespace prez {
      virtual void Init(argos::TConfigurationNode& t_node);
      virtual void ControlStep();
      virtual void Reset();
-     virtual void Destroy() {}
+     virtual void Destroy();
      
     private:
       /** Move the spiri to a squadron position
@@ -68,6 +69,9 @@ namespace prez {
       double_t max_distance_from_squadrons;
       double_t mean_distance_from_squadrons;
       uint32_t voting_session;
+
+      /** Logger */
+      std::ofstream logfile;
   };
 }
 #endif

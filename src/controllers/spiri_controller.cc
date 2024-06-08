@@ -29,8 +29,13 @@ void prez::SpiriController::Init(argos::TConfigurationNode& /* t_node */) {
   range_and_bearing_sensor = GetSensor<argos::CCI_RangeAndBearingSensor>("range_and_bearing");
   positioning_sensor = GetSensor<argos::CCI_PositioningSensor>("positioning");
 
+  logfile.open(GetId() + ".log");
   random_number_generator = argos::CRandom::CreateRNG("argos");
   Reset();
+}
+
+void prez::SpiriController::Destroy() {
+  logfile.close();
 }
       
 void prez::SpiriController::DoStart() {
@@ -60,7 +65,7 @@ void prez::SpiriController::DoVoting() {
   std::vector<prez::Squadron>* squadrons = prez::GetSquadronList();
   std::unordered_map<uint32_t, uint32_t> formations;
   const argos::CCI_RangeAndBearingSensor::TReadings neighbours = range_and_bearing_sensor->GetReadings();
-  // std::cout << ID << " senses " << neighbours.size() << " neighbours" << std::endl;
+  logfile << ID << " senses " << neighbours.size() << " neighbours" << std::endl;
   for (argos::CCI_RangeAndBearingSensor::SPacket neighbour : neighbours) {
     ++formations[neighbour.Data[KEY_SQUADRON]];
   }
@@ -68,9 +73,7 @@ void prez::SpiriController::DoVoting() {
 
   if (formations[squadron] >= squadrons->at(squadron).force) {
     for (auto formation : formations) {
-      /*if (ID == 1) {
-        std::cerr << ID << " reads that " << formation.first << " is #" << formation.second << std::endl;
-      }*/
+      logfile << ID << " reads that " << formation.first << " is #" << formation.second << std::endl;
       if (formation.first != squadron) {
         if (formation.second < squadrons->at(formation.first).force) {
           double_t reassignment_probability = 1 - (distances_from_squadrons[formation.first] / max_distance_from_squadrons);
@@ -94,7 +97,7 @@ void prez::SpiriController::DoVoting() {
 
   if (voting_session > MAX_VOTING_SESSIONS) {
     state = State::AT_GROUND;
-    std::cout << ID << " i want to go to " << squadron << std::endl;
+    logfile << ID << " i want to go to " << squadron << std::endl;
   } else {
     ++voting_session;
   }
