@@ -49,9 +49,9 @@
       <position method="uniform" min="-10,-10,0" max="10,10,0" />
       <orientation method="uniform" min="0,0,0" max="360,0,0" />
       <entity quantity="30" max_trials="10">
-        <spiri id="sp" rab_range="100000" rab_data_size="112">
+        <eye-bot id="sp" rab_range="100000" rab_data_size="112">
           <controller config="spc" />
-        </spiri>
+        </eye-bot>
       </entity>
     </distribute>
   </arena>

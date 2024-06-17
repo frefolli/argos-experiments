@@ -13,6 +13,7 @@ constexpr uint32_t KEY_ID = 1;
 constexpr uint32_t KEY_SQUADRON = 2;
 constexpr uint32_t MAX_VOTING_SESSIONS = 20;
 constexpr double_t MAX_COLLISION_AVOIDANCE_DISTANCE = 1000.0f;;
+#define USE_CAD_GLJ
 
 prez::SpiriController::SpiriController() :
   position_actuator(nullptr),
@@ -135,7 +136,7 @@ void prez::SpiriController::DoTakingOff() {
 void prez::SpiriController::DoTakenOff() {
   argos::CVector3 direction(0.0f, 0.0f, 0.0f);
   direction += ApproachSquadron();
-  // direction += AvoidObstacles();
+  direction += AvoidObstacles();
 
   position_actuator->SetRelativePosition(direction);
 }
@@ -148,19 +149,47 @@ argos::CVector3 prez::SpiriController::ApproachSquadron() {
   double_t Z = direction.GetZ();
   direction = direction.Rotate(orientation.Inverse());
   direction.SetZ(Z);
-  direction.Normalize();
+  direction = direction.Normalize();
   return direction;
 }
 
+argos::Real TargetDistance = 300.0f;
+argos::Real Gain = 25.0f;
+argos::Real Exponent = 1.5f;
+argos::Real MaxInteraction = 2.0f;
+argos::Real GeneralizedLennardJones(argos::Real f_distance) {
+   argos::Real fNormDistExp = ::pow(TargetDistance / f_distance, Exponent);
+   return -Gain / f_distance * (fNormDistExp * fNormDistExp - fNormDistExp);
+}
+
+argos::Real GravitationalPotential(argos::Real f_distance) {
+  return ::pow(::abs(TargetDistance - f_distance) / f_distance, 2.0f);
+}
+
 argos::CVector3 prez::SpiriController::AvoidObstacles() {
-  argos::CVector3 direction(0.0f, 0.0f, 0.0f);
+  argos::CVector2 direction(0.0f, 0.0f);
   const argos::CCI_RangeAndBearingSensor::TReadings neighbours = range_and_bearing_sensor->GetReadings();
-  for (argos::CCI_RangeAndBearingSensor::SPacket neighbour : neighbours) {
-    if (neighbour.Range < MAX_COLLISION_AVOIDANCE_DISTANCE) {
-      
+  if (neighbours.size() > 0) {
+    for (argos::CCI_RangeAndBearingSensor::SPacket neighbour : neighbours) {
+      if ((neighbour.Data[KEY_STATE] == State::TAKING_OFF
+        || neighbour.Data[KEY_STATE] == State::TAKEN_OFF)
+        && neighbour.Range < MAX_COLLISION_AVOIDANCE_DISTANCE) {
+        argos::CVector2 avoidance(
+          #ifdef USE_CAD_GLJ
+          GeneralizedLennardJones
+          #else
+          GravitationalPotential
+          #endif
+          (neighbour.Range), neighbour.HorizontalBearing);
+        direction += avoidance;
+      }
     }
+    direction = direction / neighbours.size();
   }
-  return direction;
+  if (direction.Length() > MaxInteraction) {
+    direction = direction.Normalize() * MaxInteraction;
+  }
+  return argos::CVector3(direction.GetX(), direction.GetY(), 0.0f);
 }
 
 void prez::SpiriController::ControlStep() {
