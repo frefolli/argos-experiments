@@ -1,0 +1,57 @@
+#include <argos3/core/utility/configuration/tinyxml/ticpp.h>
+#include <argos3/core/utility/math/range.h>
+#include <argos3/core/utility/math/vector3.h>
+#include <cmath>
+#include <controllers/spiri_controller.hh>
+#include <argos3/core/utility/configuration/argos_configuration.h>
+#include <string>
+#include <support/squadrons.hh>
+#include <support/vectors.hh>
+#include <cassert>
+#include <argos3/core/simulator/simulator.h>
+#include <argos3/core/simulator/space/space.h>
+
+prez::SpiriController::SpiriController() :
+  range_and_bearing_actuator(nullptr)
+  {}
+
+void prez::SpiriController::Init(argos::TConfigurationNode& /* t_node */) {
+  range_and_bearing_actuator = GetActuator<argos::CCI_RangeAndBearingActuator>("range_and_bearing");
+
+  task_executor.position_actuator = GetActuator<argos::CCI_QuadRotorPositionActuator>("quadrotor_position");
+  task_executor.range_and_bearing_sensor = GetSensor<argos::CCI_RangeAndBearingSensor>("range_and_bearing");
+  task_executor.positioning_sensor = GetSensor<argos::CCI_PositioningSensor>("positioning");
+  task_executor.task = &task;
+
+  task_allocator.range_and_bearing_sensor = GetSensor<argos::CCI_RangeAndBearingSensor>("range_and_bearing");
+  task_allocator.positioning_sensor = GetSensor<argos::CCI_PositioningSensor>("positioning");
+  task_allocator.random_number_generator = argos::CRandom::CreateRNG("argos");
+  task_allocator.task = &task;
+
+  logfile.open(GetId() + ".log");
+  Reset();
+}
+
+void prez::SpiriController::Destroy() {
+  logfile.close();
+}
+
+void prez::SpiriController::ControlStep() {
+  task_allocator.Round();
+  task_executor.Round();
+  
+  range_and_bearing_actuator->SetData(prez::RABKey::ID, task.id);
+  range_and_bearing_actuator->SetData(prez::RABKey::SQUADRON, task.squadron);
+  range_and_bearing_actuator->SetData(prez::RABKey::TASK_ALLOCATOR_STATE, task_allocator.state);
+  range_and_bearing_actuator->SetData(prez::RABKey::TASK_EXECUTOR_STATE, task_executor.state);
+}
+
+void prez::SpiriController::Reset() {
+  task.id = std::stoi(GetId().substr(2));
+  task.squadron = -1;
+  task_allocator.Reset();
+  task_executor.Reset();
+}
+
+using namespace prez;
+REGISTER_CONTROLLER(SpiriController, "spiri_controller")
