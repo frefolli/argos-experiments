@@ -7,6 +7,9 @@
 #include <string>
 #include <support/squadrons.hh>
 #include <support/vectors.hh>
+#include <cassert>
+#include <argos3/core/simulator/simulator.h>
+#include <argos3/core/simulator/space/space.h>
 
 constexpr uint32_t KEY_STATE = 0;
 constexpr uint32_t KEY_ID = 1;
@@ -40,6 +43,10 @@ void prez::SpiriController::Destroy() {
 }
       
 void prez::SpiriController::DoStart() {
+  const argos::CCI_RangeAndBearingSensor::TReadings neighbours = range_and_bearing_sensor->GetReadings();
+  uint32_t const n = argos::CSimulator::GetInstance().GetSpace().GetEntitiesByType("eye-bot").size();
+  assert(n==neighbours.size()+1);
+
   std::vector<prez::Squadron>* squadrons = prez::GetSquadronList();
   if (squadrons->empty()) {
     std::cerr << "Warning: squadrons is empty" << std::endl;
@@ -64,24 +71,30 @@ void prez::SpiriController::DoStart() {
 
 void prez::SpiriController::DoVoting() {
   std::vector<prez::Squadron>* squadrons = prez::GetSquadronList();
+  /** formations is a X:Y map. It has to be thought as: at this time we sense Y drones belonging to the X squadron
+   */
   std::unordered_map<uint32_t, uint32_t> formations;
-  const argos::CCI_RangeAndBearingSensor::TReadings neighbours = range_and_bearing_sensor->GetReadings();
+  /** with rab we sense all other drones in the arena
+   */
+  const argos::CCI_RangeAndBearingSensor::TReadings neighbours = range_and_bearing_sensor->GetReadings(); 
   logfile << ID << " senses " << neighbours.size() << " neighbours" << std::endl;
   for (argos::CCI_RangeAndBearingSensor::SPacket neighbour : neighbours) {
     ++formations[neighbour.Data[KEY_SQUADRON]];
   }
-  ++formations[squadron];
+  ++formations[squadron];//we belong to the squadron "squadron"
 
-  if (formations[squadron] >= squadrons->at(squadron).force) {
+  if (formations[squadron] >= squadrons->at(squadron).force) { //the current squadron has enough drones assigend to it
     for (auto formation : formations) {
-      logfile << ID << " reads that " << formation.first << " is #" << formation.second << std::endl;
+      logfile << ID << " reads that formation " << formation.first << " has #" << formation.second << " drones" <<std::endl;
       if (formation.first != squadron) {
-        if (formation.second < squadrons->at(formation.first).force) {
+        if (formation.second < squadrons->at(formation.first).force) {//this squadron has not enough drones assigend to it
+          /** we want a reassignment_probability to this squadron that scale with the inverse of the distance to it (normalized)
+           */
           double_t reassignment_probability = 1 - (distances_from_squadrons[formation.first] / max_distance_from_squadrons);
           bool reassign = random_number_generator->Bernoulli(reassignment_probability);
           if (reassign) {
             squadron = formation.first;
-            break;
+            break;//we change our formation, so our voting is over.
           }
         }/* else if (distances_from_squadrons[squadron] > mean_distance_from_squadrons
                 && distances_from_squadrons[formation.first] < mean_distance_from_squadrons) {
