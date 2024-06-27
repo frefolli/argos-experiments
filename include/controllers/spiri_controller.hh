@@ -5,10 +5,7 @@
 #include <support/task_executors/default.hh>
 #include <argos3/core/control_interface/ci_controller.h>
 #include <argos3/core/utility/math/vector3.h>
-#include <argos3/plugins/robots/generic/control_interface/ci_quadrotor_position_actuator.h>
 #include <argos3/plugins/robots/generic/control_interface/ci_range_and_bearing_actuator.h>
-#include <argos3/plugins/robots/generic/control_interface/ci_range_and_bearing_sensor.h>
-#include <argos3/plugins/robots/generic/control_interface/ci_positioning_sensor.h>
 #include <cmath>
 #include <argos3/core/utility/math/rng.h>
 #include <fstream>

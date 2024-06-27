@@ -19,7 +19,7 @@
   <controllers>
     <spiri_controller id="spc" library="builddir/libcontrollers" label="spiri_controller">
       <actuators>
-        <quadrotor_position implementation="default"/>
+        <quadrotor_speed implementation="default"/>
         <range_and_bearing implementation="default"/>
       </actuators>
       <sensors>
