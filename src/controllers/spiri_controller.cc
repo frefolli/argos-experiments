@@ -4,6 +4,9 @@
 #include <cmath>
 #include <controllers/spiri_controller.hh>
 #include <argos3/core/utility/configuration/argos_configuration.h>
+#include <argos3/plugins/robots/generic/control_interface/ci_quadrotor_speed_actuator.h>
+#include <argos3/plugins/robots/generic/control_interface/ci_range_and_bearing_sensor.h>
+#include <argos3/plugins/robots/generic/control_interface/ci_positioning_sensor.h>
 #include <string>
 #include <support/squadrons.hh>
 #include <support/vectors.hh>
@@ -18,7 +21,7 @@ prez::SpiriController::SpiriController() :
 void prez::SpiriController::Init(argos::TConfigurationNode& /* t_node */) {
   range_and_bearing_actuator = GetActuator<argos::CCI_RangeAndBearingActuator>("range_and_bearing");
 
-  task_executor.position_actuator = GetActuator<argos::CCI_QuadRotorPositionActuator>("quadrotor_position");
+  task_executor.speed_actuator = GetActuator<argos::CCI_QuadRotorSpeedActuator>("quadrotor_speed");
   task_executor.range_and_bearing_sensor = GetSensor<argos::CCI_RangeAndBearingSensor>("range_and_bearing");
   task_executor.positioning_sensor = GetSensor<argos::CCI_PositioningSensor>("positioning");
   task_executor.task = &task;
@@ -44,6 +47,8 @@ void prez::SpiriController::ControlStep() {
   range_and_bearing_actuator->SetData(prez::RABKey::SQUADRON, task.squadron);
   range_and_bearing_actuator->SetData(prez::RABKey::TASK_ALLOCATOR_STATE, task_allocator.state);
   range_and_bearing_actuator->SetData(prez::RABKey::TASK_EXECUTOR_STATE, task_executor.state);
+
+  logfile << task_executor.positioning_sensor->GetReading().Position << std::endl;
 }
 
 void prez::SpiriController::Reset() {

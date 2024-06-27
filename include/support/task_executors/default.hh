@@ -1,11 +1,12 @@
 #ifndef TASK_EXECUTOR_DEFAULT_HH
 #define TASK_EXECUTOR_DEFAULT_HH
 /** @file default.hh */
+#include <argos3/core/utility/math/angles.h>
 #include <support/task_executor.hh>
 #include <support/rab.hh>
 #include <support/squadrons.hh>
 #include <support/task.hh>
-#include <argos3/plugins/robots/generic/control_interface/ci_quadrotor_position_actuator.h>
+#include <argos3/plugins/robots/generic/control_interface/ci_quadrotor_speed_actuator.h>
 #include <argos3/plugins/robots/generic/control_interface/ci_range_and_bearing_sensor.h>
 #include <argos3/plugins/robots/generic/control_interface/ci_positioning_sensor.h>
 #include <cstdint>
@@ -15,9 +16,7 @@ namespace prez::task_executors {
     static constexpr double_t MAX_COLLISION_AVOIDANCE_DISTANCE = 500.0f;
 
     static constexpr argos::Real TARGETDISTANCE = 300.0f;
-    static constexpr argos::Real GAIN = 25.0f;
-    static constexpr argos::Real EXPONENT = 1.5f;
-    static constexpr argos::Real MAXINTERACTION = 2.0f;
+    static constexpr argos::Real MAXINTERACTION = 10.0f;
     #define USE_CAD_GLJ
 
     public:
@@ -29,7 +28,7 @@ namespace prez::task_executors {
     Task* task;
     argos::CCI_PositioningSensor* positioning_sensor;
     argos::CCI_RangeAndBearingSensor* range_and_bearing_sensor;
-    argos::CCI_QuadRotorPositionActuator* position_actuator;
+    argos::CCI_QuadRotorSpeedActuator* speed_actuator;
 
     void Start() {
       ++waited_rounds;
@@ -52,10 +51,8 @@ namespace prez::task_executors {
       }
 
       if (waiting_queue == 0) {
-        argos::CVector3 current_position = positioning_sensor->GetReading().Position;
-        argos::CVector3 squadron_position = current_position;
-        squadron_position.SetZ(3.0f);
-        position_actuator->SetAbsolutePosition(squadron_position);
+        // speed_actuator->SetRotationalSpeed(argos::CRadians::PI);
+        speed_actuator->SetLinearVelocity({0.0f, 0.0f, 10.0f});
         state = State::TAKING_OFF;
       }
     }
@@ -64,7 +61,8 @@ namespace prez::task_executors {
       // If i left 2.0f meters above ground i can consider myself taken off
       // I set and maintain current heading squadron
       argos::CVector3 current_position = positioning_sensor->GetReading().Position;
-      if (current_position.GetZ() >= 2.0f) {
+      if (current_position.GetZ() >= 1.5f) {
+        speed_actuator->SetLinearVelocity({0.0f, 0.0f, 0.0f});
         state = State::TAKEN_OFF;
       }
     }
@@ -77,17 +75,16 @@ namespace prez::task_executors {
       double_t Z = direction.GetZ();
       direction = direction.Rotate(orientation.Inverse());
       direction.SetZ(Z);
-      direction = direction.Normalize();
+      direction = direction.Normalize() * MAXINTERACTION;
       return direction;
     }
 
-    argos::Real GeneralizedLennardJones(argos::Real f_distance) {
-       argos::Real fNormDistExp = ::pow(TARGETDISTANCE / f_distance, EXPONENT);
-       return -GAIN / f_distance * (fNormDistExp * fNormDistExp - fNormDistExp);
-    }
-
     argos::Real GravitationalPotential(argos::Real f_distance) {
-      return ::pow(::abs(TARGETDISTANCE - f_distance) / f_distance, 2.0f);
+      double_t tevere = TARGETDISTANCE - f_distance;
+      if (tevere < 0) {
+        return 0.0f;
+      }
+      return ::pow(::abs(tevere) / f_distance, 2.0f);
     }
 
     argos::CVector3 AvoidObstacles() {
@@ -99,11 +96,7 @@ namespace prez::task_executors {
             || neighbour.Data[prez::RABKey::TASK_EXECUTOR_STATE] == State::TAKEN_OFF)
             && neighbour.Range < MAX_COLLISION_AVOIDANCE_DISTANCE) {
             argos::CVector2 avoidance(
-              #ifdef USE_CAD_GLJ
-              GeneralizedLennardJones
-              #else
               GravitationalPotential
-              #endif
               (neighbour.Range), neighbour.HorizontalBearing);
             direction += avoidance;
           }
@@ -121,7 +114,7 @@ namespace prez::task_executors {
       direction += ApproachSquadron();
       direction += AvoidObstacles();
 
-      position_actuator->SetRelativePosition(direction);
+      speed_actuator->SetLinearVelocity(direction);
     }
 
     void Idle() {}
