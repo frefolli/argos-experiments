@@ -25,7 +25,7 @@ namespace prez::task_executors {
     } state = START;
     uint32_t waited_rounds = 0;
 
-    Task* task;
+    Task* task;//valorized by spiri_controller
     argos::CCI_PositioningSensor* positioning_sensor;
     argos::CCI_RangeAndBearingSensor* range_and_bearing_sensor;
     argos::CCI_QuadRotorSpeedActuator* speed_actuator;
@@ -69,13 +69,8 @@ namespace prez::task_executors {
 
     argos::CVector3 ApproachSquadron() {
       argos::CVector3 position = positioning_sensor->GetReading().Position;
-      // argos::CQuaternion orientation = positioning_sensor->GetReading().Orientation;
       argos::CVector3& target_position = prez::GetSquadronList()->at(task->squadron).position;
       argos::CVector3 direction = target_position - position;
-      // double_t Z = direction.GetZ();
-      // direction = direction.Rotate(orientation.Inverse());
-      // direction.SetZ(Z);
-      // direction = direction.Normalize() * MAXINTERACTION;
       if (direction.Length() > MAXINTERACTION) {
         direction = direction.Normalize() * MAXINTERACTION;
       }
@@ -117,8 +112,20 @@ namespace prez::task_executors {
     }
 
     void TakenOff() {
+      argos::CVector3 position = positioning_sensor->GetReading().Position;
+      argos::CQuaternion orientation = positioning_sensor->GetReading().Orientation;
+      argos::CVector3& target_position = prez::GetSquadronList()->at(task->squadron).position;
       argos::CVector3 direction(0.0f, 0.0f, 0.0f);
-      direction += ApproachSquadron();
+      direction = target_position - position;
+      // std::cout<<task->id<<" at distance "<<direction.Length()<< " from farget"<<std::endl;
+
+      if(direction.Length()<3){
+        std::cout<<task->id+" arrived at destination. Idling now.";
+        state = State::IDLE;
+        return;
+      }
+
+      direction += ApproachSquadron(orientation, direction);
       direction += AvoidObstacles();
 
       speed_actuator->SetLinearVelocity(direction);
