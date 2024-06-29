@@ -4,3 +4,6 @@
 
 run:
 	argos3 -c conf/meson.argos
+
+clean:
+	rm -rf builddir
