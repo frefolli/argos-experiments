@@ -69,13 +69,16 @@ namespace prez::task_executors {
 
     argos::CVector3 ApproachSquadron() {
       argos::CVector3 position = positioning_sensor->GetReading().Position;
-      argos::CQuaternion orientation = positioning_sensor->GetReading().Orientation;
+      // argos::CQuaternion orientation = positioning_sensor->GetReading().Orientation;
       argos::CVector3& target_position = prez::GetSquadronList()->at(task->squadron).position;
       argos::CVector3 direction = target_position - position;
-      double_t Z = direction.GetZ();
-      direction = direction.Rotate(orientation.Inverse());
-      direction.SetZ(Z);
-      direction = direction.Normalize() * MAXINTERACTION;
+      // double_t Z = direction.GetZ();
+      // direction = direction.Rotate(orientation.Inverse());
+      // direction.SetZ(Z);
+      // direction = direction.Normalize() * MAXINTERACTION;
+      if (direction.Length() > MAXINTERACTION) {
+        direction = direction.Normalize() * MAXINTERACTION;
+      }
       return direction;
     }
 
@@ -89,6 +92,7 @@ namespace prez::task_executors {
 
     argos::CVector3 AvoidObstacles() {
       argos::CVector2 direction(0.0f, 0.0f);
+      argos::CQuaternion orientation = positioning_sensor->GetReading().Orientation;
       const argos::CCI_RangeAndBearingSensor::TReadings neighbours = range_and_bearing_sensor->GetReadings();
       if (neighbours.size() > 0) {
         for (argos::CCI_RangeAndBearingSensor::SPacket neighbour : neighbours) {
@@ -103,10 +107,13 @@ namespace prez::task_executors {
         }
         direction = direction / neighbours.size();
       }
-      if (direction.Length() > MAXINTERACTION) {
-        direction = direction.Normalize() * MAXINTERACTION;
+      argos::CVector3 avoidance = argos::CVector3(direction.GetX(), direction.GetY(), 0.0f);
+      avoidance = avoidance.Rotate(orientation.Inverse());
+      avoidance.SetZ(0.0f);
+      if (avoidance.Length() > MAXINTERACTION) {
+        avoidance = avoidance.Normalize() * MAXINTERACTION;
       }
-      return argos::CVector3(direction.GetX(), direction.GetY(), 0.0f);
+      return avoidance;
     }
 
     void TakenOff() {

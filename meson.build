@@ -4,7 +4,7 @@ project('prez', 'cpp',
                      'cpp_std=c++20'])
 
 lua = dependency('lua')
-qt5 = dependency('qt5', modules: ['OpenGL'])
+qt6 = dependency('qt6', modules: ['OpenGL'])
 argos3 = dependency('argos3')
 
 support = library('support', [
@@ -17,4 +17,4 @@ controllers = library('controllers', [
 
 loop_functions = library('loop_functions', [
   './src/loop_functions/loop_function.cc',
-], include_directories: ['./include'], dependencies: [lua, qt5, argos3], link_with: [controllers, support])
+], include_directories: ['./include'], dependencies: [lua, qt6, argos3], link_with: [controllers, support])
