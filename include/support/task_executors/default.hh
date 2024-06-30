@@ -116,6 +116,21 @@ namespace prez::task_executors {
       return avoidance;
     }
 
+    bool ifArrivedStop(){
+      argos::CVector3 position = positioning_sensor->GetReading().Position;
+      argos::CQuaternion orientation = positioning_sensor->GetReading().Orientation;
+      argos::CVector3& target_position = prez::GetSquadronList()->at(task->squadron).position;
+      argos::CVector3 direction(0.0f, 0.0f, 0.0f);
+      direction = target_position - position;
+      std::cout<<task->id<<" at distance "<<direction.Length()<< " from farget"<<std::endl;
+
+      if(direction.Length()<3){
+        std::cout<<task->id+" arrived at destination. Idling now.";
+        state = State::IDLE;
+        return true;//TakenOff will not be called
+      }else return false;
+    }
+
     void TakenOff() {
       argos::CVector3 direction(0.0f, 0.0f, 0.0f);
       direction += ApproachSquadron();
@@ -131,7 +146,7 @@ namespace prez::task_executors {
         case State::START: Start(); break;
         case State::AT_GROUND: AtGround(); break;
         case State::TAKING_OFF: TakingOff(); break;
-        case State::TAKEN_OFF: TakenOff(); break;
+        case State::TAKEN_OFF: /*if(! ifArrivedStop())*/ TakenOff(); break;
         case State::IDLE: Idle(); break;
       }
     }
