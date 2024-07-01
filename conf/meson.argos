@@ -39,7 +39,7 @@
       maximum_position="10,10,3"
       minimum_force="5"
       maximum_force="7"
-      number_of_squadrons="4"
+      number_of_squadrons="2"
     />
   </loop_functions>
 
@@ -48,7 +48,7 @@
     <distribute>
       <position method="uniform" min="-10,-10,0" max="10,10,0" />
       <orientation method="uniform" min="0,0,0" max="360,0,0" />
-      <entity quantity="30" max_trials="10">
+      <entity quantity="5" max_trials="10">
         <eye-bot id="sp" rab_range="100000" rab_data_size="112">
           <controller config="spc" />
         </eye-bot>

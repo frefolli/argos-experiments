@@ -3,6 +3,7 @@
 #include <argos3/core/simulator/simulator.h>
 #include <argos3/core/utility/configuration/argos_configuration.h>
 #include <support/vectors.hh>
+#include <argos3/plugins/simulator/entities/light_entity.h>
 
 prez::LoopFunction::LoopFunction() :
   random_number_generator(NULL) {
@@ -41,6 +42,14 @@ void prez::LoopFunction::InitializeSquadrons() {
     new_squadron.force = random_number_generator->Uniform(force_distribution);
     std::cout << "new squadron: " << new_squadron << std::endl;
     squadrons->push_back(new_squadron);
+
+    argos::CLightEntity* le = new argos::CLightEntity(
+      std::to_string(i),
+      argos::CVector3(new_squadron.position.GetX(), new_squadron.position.GetY(), new_squadron.position.GetY()),
+      argos::CColor::YELLOW,
+      1
+      );
+    AddEntity(*le);
   }
 }
 
