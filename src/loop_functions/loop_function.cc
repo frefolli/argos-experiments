@@ -45,7 +45,7 @@ void prez::LoopFunction::InitializeSquadrons() {
 
     argos::CLightEntity* le = new argos::CLightEntity(
       std::to_string(i),
-      argos::CVector3(new_squadron.position.GetX(), new_squadron.position.GetY(), new_squadron.position.GetY()),
+      argos::CVector3(new_squadron.position.GetX(), new_squadron.position.GetY(), new_squadron.position.GetZ()),
       argos::CColor::YELLOW,
       1
       );
