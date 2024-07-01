@@ -4,7 +4,12 @@ project('prez', 'cpp',
                      'cpp_std=c++20'])
 
 lua = dependency('lua')
-qt6 = dependency('qt6', modules: ['OpenGL'])
+qt6 = import('qt6')
+
+libqt6 = dependency('qt6', modules: ['OpenGL', 'Widgets'])
+processed = qt6.preprocess(
+  moc_headers: './include/loop_functions/id_loop_functions/id_qtuser_functions.hh',
+)
 argos3 = dependency('argos3')
 
 support = library('support', [
@@ -17,4 +22,8 @@ controllers = library('controllers', [
 
 loop_functions = library('loop_functions', [
   './src/loop_functions/loop_function.cc',
-], include_directories: ['./include'], dependencies: [lua, qt6, argos3], link_with: [controllers, support])
+], include_directories: ['./include'], dependencies: [lua, libqt6, argos3], link_with: [controllers, support])
+
+loop_functions = library('qtuser_functions', [
+  './src/loop_functions/id_loop_functions/id_qtuser_functions.cc', processed
+], include_directories: ['./include'], dependencies: [libqt6, argos3])

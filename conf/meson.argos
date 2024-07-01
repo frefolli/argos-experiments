@@ -11,7 +11,7 @@
   <framework>
     <system threads="0" />
     <experiment length="0"
-                ticks_per_second="20"
+                ticks_per_second="40"
                 random_seed="1717" />
   </framework>
 
@@ -69,6 +69,8 @@
   <!-- * Visualization * -->
   <visualization>
     <qt-opengl>
+      <user_functions library="build/loop_functions/id_loop_functions/libid_loop_functions"
+                        label="id_qtuser_functions" />
       <camera>
         <placements>
           <placement index="0" position="0,0,4.34" look_at="0,0,0" up="1,0,0" lens_focal_length="30" />

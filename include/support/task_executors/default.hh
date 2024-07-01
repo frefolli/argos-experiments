@@ -151,7 +151,7 @@ namespace prez::task_executors {
         case State::START: Start(); break;
         case State::AT_GROUND: AtGround(); break;
         case State::TAKING_OFF: TakingOff(); break;
-        case State::TAKEN_OFF: if(! ifArrivedStop()) TakenOff(); break;
+        case State::TAKEN_OFF: /*if(! ifArrivedStop()) */TakenOff(); break;
         case State::IDLE: Idle(); break;
       }
     }
