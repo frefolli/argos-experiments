@@ -13,8 +13,9 @@ qt6 = dependency('qt6', modules: ['OpenGL', 'Widgets', 'OpenGLWidgets'])
 argos3 = dependency('argos3')
 
 support = library('support', [
-  './src/support/squadrons.cc'
-], include_directories: ['./include'], dependencies: [argos3])
+  './src/support/squadrons.cc',
+  './src/support/coordination.cc'
+], include_directories: ['./include'], dependencies: [lua, argos3])
 
 controllers = library('controllers', [
   './src/controllers/spiri_controller.cc'

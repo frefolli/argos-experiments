@@ -1,6 +1,7 @@
 #ifndef TASK_EXECUTOR_DEFAULT_HH
 #define TASK_EXECUTOR_DEFAULT_HH
 /** @file default.hh */
+#include "support/coordination.hh"
 #include <argos3/core/utility/math/angles.h>
 #include <support/task_executor.hh>
 #include <support/rab.hh>
@@ -15,7 +16,7 @@ namespace prez::task_executors {
     static constexpr uint32_t MAX_WAITED_ROUNDS = 20;
     static constexpr double_t MAX_COLLISION_AVOIDANCE_DISTANCE = 500.0f;
 
-    static constexpr argos::Real TARGETDISTANCE = 300.0f;
+    static constexpr argos::Real TARGETDISTANCE = 500.0f;
     static constexpr argos::Real MAXINTERACTION = 10.0f;
     #define USE_CAD_GLJ
 
@@ -24,6 +25,9 @@ namespace prez::task_executors {
       START, AT_GROUND, TAKING_OFF, TAKEN_OFF, IDLE
     } state = START;
     uint32_t waited_rounds = 0;
+
+    double_t last_velocity = 0.0f;
+    double_t last_distance_from_target = 0.0f;
 
     Task* task;
     argos::CCI_PositioningSensor* positioning_sensor;
@@ -69,13 +73,9 @@ namespace prez::task_executors {
 
     argos::CVector3 ApproachSquadron() {
       argos::CVector3 position = positioning_sensor->GetReading().Position;
-      // argos::CQuaternion orientation = positioning_sensor->GetReading().Orientation;
       argos::CVector3& target_position = prez::GetSquadronList()->at(task->squadron).position;
       argos::CVector3 direction = target_position - position;
-      // double_t Z = direction.GetZ();
-      // direction = direction.Rotate(orientation.Inverse());
-      // direction.SetZ(Z);
-      // direction = direction.Normalize() * MAXINTERACTION;
+      last_distance_from_target = direction.Length();
       if (direction.Length() > MAXINTERACTION) {
         direction = direction.Normalize() * MAXINTERACTION;
       }
@@ -87,61 +87,52 @@ namespace prez::task_executors {
       if (tevere < 0) {
         return 0.0f;
       }
-      return ::pow(::abs(tevere) / f_distance, 2.0f);
+      return ::abs(tevere) / f_distance;
     }
 
     argos::CVector3 AvoidObstacles() {
       argos::CVector2 direction(0.0f, 0.0f);
       argos::CQuaternion orientation = positioning_sensor->GetReading().Orientation;
       const argos::CCI_RangeAndBearingSensor::TReadings neighbours = range_and_bearing_sensor->GetReadings();
-      if (neighbours.size() > 0) {
-        for (argos::CCI_RangeAndBearingSensor::SPacket neighbour : neighbours) {
-          if ((neighbour.Data[prez::RABKey::TASK_EXECUTOR_STATE] == State::TAKING_OFF
-            || neighbour.Data[prez::RABKey::TASK_EXECUTOR_STATE] == State::TAKEN_OFF)
-            && neighbour.Range < MAX_COLLISION_AVOIDANCE_DISTANCE) {
-            argos::CVector2 avoidance(
-              GravitationalPotential
-              (neighbour.Range), neighbour.HorizontalBearing);
-            direction += avoidance;
-          }
+      uint32_t n_of_forces = 0;
+      for (argos::CCI_RangeAndBearingSensor::SPacket neighbour : neighbours) {
+        if ((neighbour.Data[prez::RABKey::TASK_EXECUTOR_STATE] == State::TAKING_OFF
+          || neighbour.Data[prez::RABKey::TASK_EXECUTOR_STATE] == State::TAKEN_OFF)
+          && neighbour.Range < MAX_COLLISION_AVOIDANCE_DISTANCE) {
+          argos::CVector2 avoidance(
+            GravitationalPotential
+            (neighbour.Range), neighbour.HorizontalBearing);
+          n_of_forces++;
+          direction -= avoidance;
         }
-        direction = direction / neighbours.size();
       }
-      argos::CVector3 avoidance = argos::CVector3(direction.GetX(), direction.GetY(), 0.0f);
-      avoidance = avoidance.Rotate(orientation.Inverse());
-      avoidance.SetZ(0.0f);
-      if (avoidance.Length() > MAXINTERACTION) {
-        avoidance = avoidance.Normalize() * MAXINTERACTION;
+      if (n_of_forces > 0) {
+        direction = direction / n_of_forces;
+        argos::CVector3 avoidance = argos::CVector3(direction.GetX(), direction.GetY(), 0.0f);
+        avoidance = avoidance.Rotate(orientation);
+        avoidance.SetZ(0.0f);
+        if (avoidance.Length() > MAXINTERACTION) {
+          avoidance = avoidance.Normalize() * MAXINTERACTION;
+        }
+        return avoidance;
       }
-      return avoidance;
-    }
-
-    bool ifArrivedStop(){
-      argos::CVector3 position = positioning_sensor->GetReading().Position;
-      argos::CQuaternion orientation = positioning_sensor->GetReading().Orientation;
-      argos::CVector3& target_position = prez::GetSquadronList()->at(task->squadron).position;
-      argos::CVector3 direction(0.0f, 0.0f, 0.0f);
-      direction = target_position - position;
-      // std::cout<<task->id<<" at distance "<<direction.Length()<< " from farget"<<std::endl;
-
-      if(direction.Length()<2){
-        std::cout<<task->id+" arrived at destination. Idling now.";
-        state = State::IDLE;
-        argos::CVector3 stop(0.0f, 0.0f, 0.0f);
-        speed_actuator->SetLinearVelocity(stop);
-        return true;//TakenOff will not be called
-      }else return false;
+      return {0.0f, 0.0f, 0.0f};
     }
 
     void TakenOff() {
       argos::CVector3 direction(0.0f, 0.0f, 0.0f);
       direction += ApproachSquadron();
       direction += AvoidObstacles();
-      argos::CVector3 zeros(0.0f, 0.0f, 0.0f);
-      if(direction==zeros){
-        std::cout<<"ops"<<std::endl;
-      }
+      last_velocity = direction.Length();
       speed_actuator->SetLinearVelocity(direction);
+      // last_velocity = direction.Length();
+
+      if(last_velocity < 0.15f) {
+        prez::Coordination::GetInstance().Finished();
+        state = State::IDLE;
+        argos::CVector3 stop(0.0f, 0.0f, 0.0f);
+        speed_actuator->SetLinearVelocity(stop);
+      }
     }
 
     void Idle() {}
@@ -151,7 +142,7 @@ namespace prez::task_executors {
         case State::START: Start(); break;
         case State::AT_GROUND: AtGround(); break;
         case State::TAKING_OFF: TakingOff(); break;
-        case State::TAKEN_OFF: /*if(! ifArrivedStop()) */TakenOff(); break;
+        case State::TAKEN_OFF: TakenOff(); break;
         case State::IDLE: Idle(); break;
       }
     }

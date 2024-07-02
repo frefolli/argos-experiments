@@ -1,4 +1,6 @@
+#include <fstream>
 #include <loop_functions/loop_function.hh>
+#include <ostream>
 #include <support/squadrons.hh>
 #include <argos3/core/simulator/simulator.h>
 #include <argos3/core/utility/configuration/argos_configuration.h>
@@ -35,12 +37,16 @@ void prez::LoopFunction::InitializeSquadrons() {
   std::vector<prez::Squadron>* squadrons = prez::GetSquadronList();
   squadrons->clear();
   prez::Squadron new_squadron;
+
+  std::ofstream logfile ("squadrons.log");
   for (uint32_t i = 0; i < squadrons_config.number_of_squadrons; ++i) {
     new_squadron.position.SetX(random_number_generator->Uniform(position_X_distribution));
     new_squadron.position.SetY(random_number_generator->Uniform(position_Y_distribution));
     new_squadron.position.SetZ(random_number_generator->Uniform(position_Z_distribution));
     new_squadron.force = random_number_generator->Uniform(force_distribution);
-    std::cout << "new squadron: " << new_squadron << std::endl;
+    logfile
+      << new_squadron
+      << std::endl;
     squadrons->push_back(new_squadron);
 
     argos::CLightEntity* le = new argos::CLightEntity(
@@ -51,6 +57,7 @@ void prez::LoopFunction::InitializeSquadrons() {
       );
     AddEntity(*le);
   }
+  logfile.close();
 }
 
 using namespace prez;

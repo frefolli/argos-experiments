@@ -32,6 +32,9 @@ void prez::SpiriController::Init(argos::TConfigurationNode& /* t_node */) {
   task_allocator.task = &task;
 
   logfile.open(GetId() + ".log");
+  logfile
+    << "Tick, posX, posY, posZ, d_target, velocity, te_state"
+    << std::endl;
   Reset();
 }
 
@@ -48,7 +51,14 @@ void prez::SpiriController::ControlStep() {
   range_and_bearing_actuator->SetData(prez::RABKey::TASK_ALLOCATOR_STATE, task_allocator.state);
   range_and_bearing_actuator->SetData(prez::RABKey::TASK_EXECUTOR_STATE, task_executor.state);
 
-  logfile << task_executor.positioning_sensor->GetReading().Position << std::endl;
+  if (task_executor.state != decltype(task_executor)::State::IDLE)
+    logfile
+      << tick++ << ", "
+      << task_executor.positioning_sensor->GetReading().Position << ", "
+      << task_executor.last_distance_from_target << ", "
+      << task_executor.last_velocity << ", "
+      << task_executor.state
+      << std::endl;
 }
 
 void prez::SpiriController::Reset() {
