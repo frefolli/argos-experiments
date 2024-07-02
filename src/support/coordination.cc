@@ -12,6 +12,7 @@ void prez::Coordination::Finished() {
 
   const uint32_t number_of_eyebots = argos::CSimulator::GetInstance().GetSpace().GetEntitiesByType("eye-bot").size();
   if (number_of_eyebots == finished_counter) {
+    finished_counter = 0;
     argos::CSimulator::GetInstance().Terminate();
   }
 }
