@@ -11,6 +11,8 @@ namespace prez {
       LoopFunction();
       virtual ~LoopFunction() {}
       virtual void Init(argos::TConfigurationNode& t_tree);
+      /* This method restore the state of the simulation at it was right after Init() was called
+      */
       virtual void Reset();
 
     private:

@@ -51,9 +51,9 @@ void prez::SpiriController::ControlStep() {
   range_and_bearing_actuator->SetData(prez::RABKey::TASK_ALLOCATOR_STATE, task_allocator.state);
   range_and_bearing_actuator->SetData(prez::RABKey::TASK_EXECUTOR_STATE, task_executor.state);
 
-  if (task_executor.state != decltype(task_executor)::State::IDLE)
+  if (task_executor.state != decltype(task_executor)::State::ARRIVED)
     logfile
-      << tick++ << ", "
+      << task_executor.tick << ", "
       << task_executor.positioning_sensor->GetReading().Position << ", "
       << task_executor.last_distance_from_target << ", "
       << task_executor.last_velocity << ", "

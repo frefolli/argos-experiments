@@ -11,6 +11,7 @@
 #include <argos3/plugins/robots/generic/control_interface/ci_range_and_bearing_sensor.h>
 #include <argos3/plugins/robots/generic/control_interface/ci_positioning_sensor.h>
 #include <cstdint>
+#include <numeric>
 namespace prez::task_executors {
   class Default : public TaskExecutor {
     static constexpr uint32_t MAX_WAITED_ROUNDS = 20;
@@ -18,13 +19,21 @@ namespace prez::task_executors {
 
     static constexpr argos::Real TARGETDISTANCE = 500.0f;
     static constexpr argos::Real MAXINTERACTION = 10.0f;
+    std::vector<argos::Real> targetDistancesOverTime;
+    bool singletonDone = false;
     #define USE_CAD_GLJ
 
-    public:
+    public: 
+    /* attributes read also by spiri_controller
+    */
     enum State {
-      START, AT_GROUND, TAKING_OFF, TAKEN_OFF, IDLE
+      START, AT_GROUND, TAKING_OFF, TAKEN_OFF, ARRIVED
     } state = START;
+
+    uint32_t tick = 0;
     uint32_t waited_rounds = 0;
+    argos::Real meanTargetDistance = -1;
+    uint32_t ticksToArrive = -1;
 
     double_t last_velocity = 0.0f;
     double_t last_distance_from_target = 0.0f;
@@ -76,6 +85,7 @@ namespace prez::task_executors {
       argos::CVector3& target_position = prez::GetSquadronList()->at(task->squadron).position;
       argos::CVector3 direction = target_position - position;
       last_distance_from_target = direction.Length();
+      collectDistanceFromTarget(last_distance_from_target);
       if (direction.Length() > MAXINTERACTION) {
         direction = direction.Normalize() * MAXINTERACTION;
       }
@@ -129,27 +139,48 @@ namespace prez::task_executors {
 
       if(last_velocity < 0.15f) {
         prez::Coordination::GetInstance().Finished();
-        state = State::IDLE;
+        state = State::ARRIVED;
         argos::CVector3 stop(0.0f, 0.0f, 0.0f);
         speed_actuator->SetLinearVelocity(stop);
       }
     }
 
-    void Idle() {}
+    void Arrived() {
+      if(!singletonDone){
+        singletonDone = true;     
+        calculateMetrics();
+        // argos::CLoopFunctions::RemoveEntity(task->id);
+      }
+    }
 
     void Round() {
+      tick++;
       switch(state) {
         case State::START: Start(); break;
         case State::AT_GROUND: AtGround(); break;
         case State::TAKING_OFF: TakingOff(); break;
         case State::TAKEN_OFF: TakenOff(); break;
-        case State::IDLE: Idle(); break;
+        case State::ARRIVED: Arrived(); break;
       }
     }
   
     void Reset() {
       state = START;
       waited_rounds = 0;
+      targetDistancesOverTime.clear();
+      singletonDone=false;
+    }
+
+    void collectDistanceFromTarget(argos::Real distanceFromTarget){
+      targetDistancesOverTime.push_back(distanceFromTarget);
+    }
+
+    void calculateMetrics(){
+      argos::Real sum = std::accumulate(targetDistancesOverTime.begin(), targetDistancesOverTime.end(), 0.0);
+      meanTargetDistance = sum / targetDistancesOverTime.size();
+      std::cout<<task->id<<" meanTargetDistance "<<meanTargetDistance<<std::endl;
+      ticksToArrive = tick;
+      std::cout<<task->id<< "is arrived at destination at tick "<<ticksToArrive <<std::endl;
     }
   };
 }

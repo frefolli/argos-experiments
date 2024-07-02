@@ -29,7 +29,6 @@ namespace prez {
 
       /** Logger */
       std::ofstream logfile;
-      uint32_t tick = 0;
 
       /** Composition over Inheritance */
       Task task;
