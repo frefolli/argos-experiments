@@ -3,7 +3,7 @@
 /** @file NN.hh */
 #include <limits>
 #include <support/task_allocator.hh>
-#include <support/squadrons.hh>
+#include <support/targets.hh>
 #include <support/rab.hh>
 #include <support/task.hh>
 #include <argos3/core/simulator/simulator.h>
@@ -26,22 +26,22 @@ namespace prez::task_allocators {
     argos::CCI_RangeAndBearingSensor* range_and_bearing_sensor;//not used here but in spiri_controller
 
     
-    std::unordered_map<uint32_t, double_t> distances_from_squadrons;
-    double_t min_distance_from_squadrons = std::numeric_limits<int>::max();
-    double_t nearest_squadron;
+    std::unordered_map<uint32_t, double_t> distances_from_targets;
+    double_t min_distance_from_targets = std::numeric_limits<int>::max();
+    double_t nearest_target;
 
     void Start() {
-      std::vector<prez::Squadron>* squadrons = prez::GetSquadronList();
+      std::vector<prez::Target>* targets = prez::GetTargetList();
       argos::CVector3 position = positioning_sensor->GetReading().Position;
 
-      for (uint32_t index = 0; index < squadrons->size(); ++index) {
-          distances_from_squadrons[index] = (position - squadrons->at(index).position).Length();
-          if(distances_from_squadrons[index] < min_distance_from_squadrons){
-            min_distance_from_squadrons = distances_from_squadrons[index];
-            nearest_squadron = index;
+      for (uint32_t index = 0; index < targets->size(); ++index) {
+          distances_from_targets[index] = (position - targets->at(index).position).Length();
+          if(distances_from_targets[index] < min_distance_from_targets){
+            min_distance_from_targets = distances_from_targets[index];
+            nearest_target = index;
           }          
       }
-      task->squadron = nearest_squadron;//my squadron is the nearest to me
+      task->target = nearest_target;//my target is the nearest to me
       state = State::IDLE;
     }
 
@@ -56,8 +56,8 @@ namespace prez::task_allocators {
 
     void Reset() {
       state = START;
-      distances_from_squadrons.clear();
-      min_distance_from_squadrons = std::numeric_limits<int>::max();
+      distances_from_targets.clear();
+      min_distance_from_targets = std::numeric_limits<int>::max();
     }
   };
 }

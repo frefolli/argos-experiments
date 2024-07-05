@@ -16,19 +16,19 @@ namespace prez {
       virtual void Reset();
 
     private:
-      void InitializeSquadrons();
+      void InitializeTargets();
     
       argos::CRandom::CRNG* random_number_generator;
       
-      /** Configuration for Squadron Initialization */
-      struct Squadrons {
-        uint32_t number_of_squadrons = 4;
+      /** Configuration for Target Initialization */
+      struct Targets {
+        uint32_t number_of_targets = 4;
         uint32_t minimum_force = 5;
         uint32_t maximum_force = 7;
         argos::CVector3 minimum_position;
         argos::CVector3 maximum_position;
-      } squadrons_config;
-      void ConfigureSquadrons(argos::TConfigurationNode& config);
+      } targets_config;
+      void ConfigureTargets(argos::TConfigurationNode& config);
   };
 }
 #endif

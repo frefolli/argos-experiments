@@ -2,7 +2,7 @@
 #define TASK_ALLOCATORS_DEFAULT_HH
 /** @file default.hh */
 #include <support/task_allocator.hh>
-#include <support/squadrons.hh>
+#include <support/targets.hh>
 #include <support/rab.hh>
 #include <support/task.hh>
 #include <argos3/core/simulator/simulator.h>
@@ -21,9 +21,9 @@ namespace prez::task_allocators {
     } state = START;
     uint32_t voting_sessions = 0;
 
-    std::unordered_map<uint32_t, double_t> distances_from_squadrons;
-    double_t max_distance_from_squadrons;
-    double_t mean_distance_from_squadrons;
+    std::unordered_map<uint32_t, double_t> distances_from_targets;
+    double_t max_distance_from_targets;
+    double_t mean_distance_from_targets;
 
     Task* task;
     argos::CRandom::CRNG* random_number_generator;
@@ -35,52 +35,52 @@ namespace prez::task_allocators {
       uint32_t const n = argos::CSimulator::GetInstance().GetSpace().GetEntitiesByType("eye-bot").size();
       assert(n == neighbours.size() + 1);
 
-      std::vector<prez::Squadron>* squadrons = prez::GetSquadronList();
-      if (squadrons->empty()) {
-        std::cerr << "Warning: squadrons is empty" << std::endl;
+      std::vector<prez::Target>* targets = prez::GetTargetList();
+      if (targets->empty()) {
+        std::cerr << "Warning: targets is empty" << std::endl;
       } else {
-        argos::CRange<uint32_t> squadron_range(0, squadrons->size());
-        task->squadron = random_number_generator->Uniform(squadron_range) % squadrons->size();
+        argos::CRange<uint32_t> target_range(0, targets->size());
+        task->target = random_number_generator->Uniform(target_range) % targets->size();
 
-        mean_distance_from_squadrons = 0.0f;
-        max_distance_from_squadrons = 0.0f;
+        mean_distance_from_targets = 0.0f;
+        max_distance_from_targets = 0.0f;
         argos::CVector3 position = positioning_sensor->GetReading().Position;
-        for (uint32_t index = 0; index < squadrons->size(); ++index) {
-          distances_from_squadrons[index] = (position - squadrons->at(index).position).Length();
-          mean_distance_from_squadrons += distances_from_squadrons[index];
-          max_distance_from_squadrons = std::max(max_distance_from_squadrons, distances_from_squadrons[index]);
+        for (uint32_t index = 0; index < targets->size(); ++index) {
+          distances_from_targets[index] = (position - targets->at(index).position).Length();
+          mean_distance_from_targets += distances_from_targets[index];
+          max_distance_from_targets = std::max(max_distance_from_targets, distances_from_targets[index]);
         }
-        mean_distance_from_squadrons /= squadrons->size();
+        mean_distance_from_targets /= targets->size();
         state = State::VOTING;
       }
       ++voting_sessions;
     }
 
     void Voting() {
-      std::vector<prez::Squadron>* squadrons = prez::GetSquadronList();
+      std::vector<prez::Target>* targets = prez::GetTargetList();
       /** formations is a X:Y map. It has to be thought as:
-       * at this time we sense Y drones belonging to the X squadron */
+       * at this time we sense Y drones belonging to the X target */
       std::unordered_map<uint32_t, uint32_t> formations;
       /** with rab we sense all other drones in the arena */
       const argos::CCI_RangeAndBearingSensor::TReadings neighbours = range_and_bearing_sensor->GetReadings(); 
       for (argos::CCI_RangeAndBearingSensor::SPacket neighbour : neighbours) {
-        ++formations[neighbour.Data[prez::RABKey::SQUADRON]];
+        ++formations[neighbour.Data[prez::RABKey::TARGET]];
         }
-      /** we belong to the squadron "squadron" */
-      ++formations[task->squadron];
+      /** we belong to the target "target" */
+      ++formations[task->target];
 
-      //the current squadron has enough drones assigend to it?
-      if (formations[task->squadron] >= squadrons->at(task->squadron).force) {
+      //the current target has enough drones assigend to it?
+      if (formations[task->target] >= targets->at(task->target).force) {
         for (auto formation : formations) {
-          if (formation.first != task->squadron) {
-            //this squadron has not enough drones assigend to it?
-            if (formation.second < squadrons->at(formation.first).force) {
-              /** we want a reassignment_probability to this squadron
+          if (formation.first != task->target) {
+            //this target has not enough drones assigend to it?
+            if (formation.second < targets->at(formation.first).force) {
+              /** we want a reassignment_probability to this target
                *  that scale with the inverse of the distance to it (normalized) */
-              double_t reassignment_probability = 1 - (distances_from_squadrons[formation.first] / max_distance_from_squadrons);
+              double_t reassignment_probability = 1 - (distances_from_targets[formation.first] / max_distance_from_targets);
               bool reassign = random_number_generator->Bernoulli(reassignment_probability);
               if (reassign) {
-                task->squadron = formation.first;
+                task->target = formation.first;
                 /** we changed our formation, so our voting is over. */
                 break;
               }
@@ -110,9 +110,9 @@ namespace prez::task_allocators {
     void Reset() {
       state = START;
       voting_sessions = 0;
-      distances_from_squadrons.clear();
-      max_distance_from_squadrons = 0.0f;
-      mean_distance_from_squadrons = 0.0f;
+      distances_from_targets.clear();
+      max_distance_from_targets = 0.0f;
+      mean_distance_from_targets = 0.0f;
     }
   };
 }
