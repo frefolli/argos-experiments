@@ -20,11 +20,10 @@ namespace prez {
     
       argos::CRandom::CRNG* random_number_generator;
       
-      /** Configuration for Target Initialization */
+      /** Configuration for Target Initialization. Just used in InitializeTargets. */
       struct Targets {
-        uint32_t number_of_targets = 4;
-        uint32_t minimum_force = 5;
-        uint32_t maximum_force = 7;
+        uint32_t number_of_targets;
+        uint32_t required_target_force;
         argos::CVector3 minimum_position;
         argos::CVector3 maximum_position;
       } targets_config;

@@ -33,14 +33,14 @@ namespace prez::task_allocators {
     void Start() {
       const argos::CCI_RangeAndBearingSensor::TReadings neighbours = range_and_bearing_sensor->GetReadings();
       uint32_t const n = argos::CSimulator::GetInstance().GetSpace().GetEntitiesByType("eye-bot").size();
-      assert(n == neighbours.size() + 1);
+      assert(n == neighbours.size() + 1);//we are able to reach all other drones with our rab
 
       std::vector<prez::Target>* targets = prez::GetTargetList();
       if (targets->empty()) {
         std::cerr << "Warning: targets is empty" << std::endl;
       } else {
         argos::CRange<uint32_t> target_range(0, targets->size());
-        task->target = random_number_generator->Uniform(target_range) % targets->size();
+        task->target = random_number_generator->Uniform(target_range);
 
         mean_distance_from_targets = 0.0f;
         max_distance_from_targets = 0.0f;

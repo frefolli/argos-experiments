@@ -7,7 +7,7 @@
 namespace prez {
   struct Target {
     argos::CVector3 position;
-    uint32_t force;
+    uint32_t force;//number of drones that ideally should be assigned to him
   };
 
   std::vector<Target>* GetTargetList();
