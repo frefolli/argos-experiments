@@ -3,6 +3,7 @@
 /** @file */
 #include <support/task_allocators/default.hh>
 #include <support/task_allocators/nn.hh>
+#include <support/task_allocators/RandomChoice.hh>
 #include <support/task_executors/default.hh>
 #include <argos3/core/control_interface/ci_controller.h>
 #include <argos3/core/utility/math/vector3.h>
@@ -32,7 +33,7 @@ namespace prez {
 
       /** Composition over Inheritance */
       Task task;
-      task_allocators::NN task_allocator;
+      task_allocators::RandomChoice task_allocator;
       task_executors::Default task_executor;
   };
 }

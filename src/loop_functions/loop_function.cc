@@ -8,59 +8,67 @@
 #include <support/logging.hh>
 #include <loop_functions/loop_function.hh>
 
-prez::LoopFunction::LoopFunction() :
-  random_number_generator(NULL) {
+prez::LoopFunction::LoopFunction() : random_number_generator(NULL)
+{
 }
 
-void prez::LoopFunction::Init(argos::TConfigurationNode& t_node) {
+void prez::LoopFunction::Init(argos::TConfigurationNode &t_node)
+{
   ConfigureTargets(argos::GetNode(t_node, "targets"));
   random_number_generator = argos::CRandom::CreateRNG("argos");
   Reset();
 }
 
-void prez::LoopFunction::ConfigureTargets(argos::TConfigurationNode& config) {
+void prez::LoopFunction::ConfigureTargets(argos::TConfigurationNode &config)
+{
+  /*we valorize targets_config with the values read from the config file*/
   argos::GetNodeAttribute(config, "minimum_position", targets_config.minimum_position);
   argos::GetNodeAttribute(config, "maximum_position", targets_config.maximum_position);
-  argos::GetNodeAttribute(config, "minimum_force", targets_config.minimum_force);
-  argos::GetNodeAttribute(config, "maximum_force", targets_config.maximum_force);
+  argos::GetNodeAttribute(config, "required_target_force", targets_config.required_target_force);
+  std::cout << "required_target_force" << targets_config.required_target_force << std::endl;
   argos::GetNodeAttribute(config, "number_of_targets", targets_config.number_of_targets);
+  std::cout << "number_of_targets" << targets_config.number_of_targets << std::endl;
+
+  uint32_t const n = argos::CSimulator::GetInstance().GetSpace().GetEntitiesByType("eye-bot").size();
+  std::cout << n << std::endl;
 }
 
-void prez::LoopFunction::Reset() {
+void prez::LoopFunction::Reset()
+{
   InitializeTargets();
 }
 
-void prez::LoopFunction::InitializeTargets() {
-  argos::CRange<uint32_t> force_distribution({targets_config.minimum_force,targets_config.maximum_force});
-  argos::CRange<double_t> position_X_distribution({targets_config.minimum_position.GetX(),targets_config.maximum_position.GetX()});
-  argos::CRange<double_t> position_Y_distribution({targets_config.minimum_position.GetY(),targets_config.maximum_position.GetY()});
-  argos::CRange<double_t> position_Z_distribution({targets_config.minimum_position.GetZ(),targets_config.maximum_position.GetZ()});
-  std::vector<prez::Target>* targets = prez::GetTargetList();
+void prez::LoopFunction::InitializeTargets()
+{
+  argos::CRange<double_t> position_X_distribution({targets_config.minimum_position.GetX(), targets_config.maximum_position.GetX()});
+  argos::CRange<double_t> position_Y_distribution({targets_config.minimum_position.GetY(), targets_config.maximum_position.GetY()});
+  argos::CRange<double_t> position_Z_distribution({targets_config.minimum_position.GetZ(), targets_config.maximum_position.GetZ()});
+  std::vector<prez::Target> *targets = prez::GetTargetList();
   targets->clear();
   prez::Target new_target;
 
-  std::ofstream logfile (prez::TargetsLogfile());
+  std::ofstream logfile(prez::TargetsLogfile());
   logfile
-    << "TargetID,PosX,PosY,PosZ,Force"
-    << std::endl;
-  for (uint32_t i = 0; i < targets_config.number_of_targets; ++i) {
+      << "TargetID,PosX,PosY,PosZ,Force"
+      << std::endl;
+  for (uint32_t i = 0; i < targets_config.number_of_targets; ++i)
+  {
     new_target.position.SetX(random_number_generator->Uniform(position_X_distribution));
     new_target.position.SetY(random_number_generator->Uniform(position_Y_distribution));
     new_target.position.SetZ(random_number_generator->Uniform(position_Z_distribution));
-    new_target.force = random_number_generator->Uniform(force_distribution);
+    new_target.force = targets_config.required_target_force;
     logfile
-      << i << ","
-      << new_target.position << ","
-      << new_target.force
-      << std::endl;
+        << i << ","
+        << new_target.position << ","
+        << new_target.force
+        << std::endl;
     targets->push_back(new_target);
 
-    argos::CLightEntity* le = new argos::CLightEntity(
-      std::to_string(i),
-      argos::CVector3(new_target.position.GetX(), new_target.position.GetY(), new_target.position.GetZ()),
-      argos::CColor::YELLOW,
-      1
-      );
+    argos::CLightEntity *le = new argos::CLightEntity(
+        std::to_string(i),
+        argos::CVector3(new_target.position.GetX(), new_target.position.GetY(), new_target.position.GetZ()),
+        argos::CColor::YELLOW,
+        1);
     AddEntity(*le);
   }
   logfile.close();

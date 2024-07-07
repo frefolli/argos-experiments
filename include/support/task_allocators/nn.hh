@@ -21,9 +21,9 @@ namespace prez::task_allocators {
     } state = START;
 
     Task* task;
-    argos::CRandom::CRNG* random_number_generator;//not used here but in spiri_controller
-    argos::CCI_PositioningSensor* positioning_sensor;//not used here but in spiri_controller
-    argos::CCI_RangeAndBearingSensor* range_and_bearing_sensor;//not used here but in spiri_controller
+    argos::CRandom::CRNG* random_number_generator;//not used here but every task_allocators should have it
+    argos::CCI_PositioningSensor* positioning_sensor;
+    argos::CCI_RangeAndBearingSensor* range_and_bearing_sensor;//not used here but every task_allocators should have it
 
     
     std::unordered_map<uint32_t, double_t> distances_from_targets;

@@ -46,7 +46,8 @@ void prez::SpiriController::Destroy() {
 void prez::SpiriController::ControlStep() {
   task_allocator.Round();
   task_executor.Round();
-  
+  /*we broadcast this (updated) infos with the rab
+  */
   range_and_bearing_actuator->SetData(prez::RABKey::ID, task.id);
   range_and_bearing_actuator->SetData(prez::RABKey::TARGET, task.target);
   range_and_bearing_actuator->SetData(prez::RABKey::TASK_ALLOCATOR_STATE, task_allocator.state);
