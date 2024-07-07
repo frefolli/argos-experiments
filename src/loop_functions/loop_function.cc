@@ -25,12 +25,7 @@ void prez::LoopFunction::ConfigureTargets(argos::TConfigurationNode &config)
   argos::GetNodeAttribute(config, "minimum_position", targets_config.minimum_position);
   argos::GetNodeAttribute(config, "maximum_position", targets_config.maximum_position);
   argos::GetNodeAttribute(config, "required_target_force", targets_config.required_target_force);
-  std::cout << "required_target_force" << targets_config.required_target_force << std::endl;
   argos::GetNodeAttribute(config, "number_of_targets", targets_config.number_of_targets);
-  std::cout << "number_of_targets" << targets_config.number_of_targets << std::endl;
-
-  uint32_t const n = argos::CSimulator::GetInstance().GetSpace().GetEntitiesByType("eye-bot").size();
-  std::cout << n << std::endl;
 }
 
 void prez::LoopFunction::Reset()

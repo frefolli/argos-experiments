@@ -5,3 +5,4 @@ env
 out
 plot/*.png
 __pycache__
+archive
