@@ -2,16 +2,15 @@
 /****************************************/
 /****************************************/
 
-prez::UserFunction::UserFunction()
-{
-   RegisterUserFunction<prez::UserFunction, argos::CEyeBotEntity>(&prez::UserFunction::Draw);
+prez::UserFunction::UserFunction() {
+   RegisterUserFunction<prez::UserFunction, argos::CEyeBotEntity>(&prez::UserFunction::DrawDroneLabel);
+   RegisterUserFunction<prez::UserFunction, argos::CLightEntity>(&prez::UserFunction::DrawTargetLabel);
 }
 
 /****************************************/
 /****************************************/
 
-void prez::UserFunction::Draw(argos::CEyeBotEntity &c_entity)
-{
+void prez::UserFunction::DrawDroneLabel(argos::CEyeBotEntity &c_entity) {
    /* The position of the text is expressed wrt the reference point of the eyebot
     * For a eye-bot, the reference point is the center of its base.
     * See also the description in
@@ -21,7 +20,15 @@ void prez::UserFunction::Draw(argos::CEyeBotEntity &c_entity)
             c_entity.GetId().c_str());      // text
 }
 
-
+void prez::UserFunction::DrawTargetLabel(argos::CLightEntity &c_entity) {
+   /* The position of the text is expressed wrt the reference point of the eyebot
+    * For a eye-bot, the reference point is the center of its base.
+    * See also the description in
+    * $ argos3 -q eye-bot
+    */
+   DrawText(argos::CVector3(0.0, 0.0, 0.3), // position
+            c_entity.GetId().c_str());      // text
+}
 
 /****************************************/
 /****************************************/
