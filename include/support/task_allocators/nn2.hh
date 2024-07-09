@@ -82,7 +82,7 @@ namespace prez::task_allocators
       /** we belong to the target "target" */
       ++formations[task->target];
 
-      // if the current target has enough drones assigend to it...
+      // if the current target has enough drones assigend to it...we relocate
       if (formations[task->target] > targets->at(task->target).force)
       {
         argos::CRange<uint32_t> target_range(0, targets->size());

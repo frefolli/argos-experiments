@@ -26,6 +26,7 @@ loop_functions = library('loop_functions', [
 ], include_directories: ['./include'], dependencies: [lua, argos3], link_with: [controllers, support])
 
 user_functions = library('user_functions', [
+  './src/user_functions/user_function2.cc',
   './src/user_functions/user_function.cc'
   #, processed
 ], include_directories: ['./include'], dependencies: [lua, qt6, argos3])

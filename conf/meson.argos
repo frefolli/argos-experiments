@@ -68,7 +68,8 @@
   <!-- * Visualization * -->
   <visualization>
     <qt-opengl>
-      <user_functions library="builddir/libuser_functions" label="user_function" />
+      <!-- <user_functions library="builddir/libuser_functions" label="user_function" /> -->
+      <user_functions library="builddir/libuser_functions" label="user_function2" />
       <camera>
         <placements>
           <placement index="0" position="0,0,4.34" look_at="0,0,0" up="1,0,0" lens_focal_length="30" />

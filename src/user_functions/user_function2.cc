@@ -1,16 +1,16 @@
-#include <user_functions/user_function.hh>
+#include <user_functions/user_function2.hh>
 /****************************************/
 /****************************************/
 
-prez::UserFunction::UserFunction()
+prez::UserFunction2::UserFunction2()
 {
-   RegisterUserFunction<prez::UserFunction, argos::CEyeBotEntity>(&prez::UserFunction::Draw);
+   RegisterUserFunction<prez::UserFunction2, argos::CLightEntity>(&prez::UserFunction2::Draw);
 }
 
 /****************************************/
 /****************************************/
 
-void prez::UserFunction::Draw(argos::CEyeBotEntity &c_entity)
+void prez::UserFunction2::Draw(argos::CLightEntity &c_entity)
 {
    /* The position of the text is expressed wrt the reference point of the eyebot
     * For a eye-bot, the reference point is the center of its base.
@@ -21,10 +21,8 @@ void prez::UserFunction::Draw(argos::CEyeBotEntity &c_entity)
             c_entity.GetId().c_str());      // text
 }
 
-
-
 /****************************************/
 /****************************************/
 
 using namespace prez;
-REGISTER_QTOPENGL_USER_FUNCTIONS(UserFunction, "user_function")
+REGISTER_QTOPENGL_USER_FUNCTIONS(UserFunction2, "user_function2")
