@@ -1,4 +1,6 @@
+#include <sstream>
 #include <user_functions/user_function.hh>
+#include <controllers/spiri_controller.hh>
 /****************************************/
 /****************************************/
 
@@ -16,8 +18,11 @@ void prez::UserFunction::DrawDroneLabel(argos::CEyeBotEntity &c_entity) {
     * See also the description in
     * $ argos3 -q eye-bot
     */
+  prez::SpiriController& controller = static_cast<prez::SpiriController&>(c_entity.GetControllableEntity().GetController());
+  std::ostringstream out ("");
+  out << c_entity.GetId().c_str() << " -> " << controller.GetTask().target << std::endl;
    DrawText(argos::CVector3(0.0, 0.0, 0.3), // position
-            c_entity.GetId().c_str());      // text
+            out.str());      // text
 }
 
 void prez::UserFunction::DrawTargetLabel(argos::CLightEntity &c_entity) {

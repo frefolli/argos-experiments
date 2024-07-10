@@ -27,6 +27,8 @@ namespace prez
     virtual void Reset();
     virtual void Destroy();
 
+    const Task& GetTask() { return task; };
+
   private:
     /** Signals it's state and range to other spiris */
     argos::CCI_RangeAndBearingActuator *range_and_bearing_actuator;
