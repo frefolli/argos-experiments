@@ -3,6 +3,7 @@
 /** @file default.hh */
 #include "support/coordination.hh"
 #include <argos3/core/utility/math/angles.h>
+#include <argos3/core/utility/math/vector3.h>
 #include <support/task_executor.hh>
 #include <support/rab.hh>
 #include <support/targets.hh>
@@ -36,6 +37,9 @@ namespace prez::task_executors {
     argos::CCI_PositioningSensor* positioning_sensor;
     argos::CCI_RangeAndBearingSensor* range_and_bearing_sensor;
     argos::CCI_QuadRotorSpeedActuator* speed_actuator;
+
+    argos::CVector3 last_position;
+    double_t delta_position;
 
     void Start() {
       ComputeHeadingToTarget();
@@ -74,6 +78,7 @@ namespace prez::task_executors {
       if (current_position.GetZ() >= 1.5f) {
         speed_actuator->SetLinearVelocity({0.0f, 0.0f, 0.0f});
         state = State::TAKEN_OFF;
+        last_position = current_position;
       }
     }
 
@@ -130,11 +135,12 @@ namespace prez::task_executors {
       task->speed = direction.Length();
       speed_actuator->SetLinearVelocity(direction);
 
-      if(task->speed < 0.15f) {
+      if(delta_position < 10e-4) {
         prez::Coordination::GetInstance().Finished();
         state = State::ARRIVED;
         argos::CVector3 stop(0.0f, 0.0f, 0.0f);
         speed_actuator->SetLinearVelocity(stop);
+        std::cout << task->id << " going down" << std::endl;
       }
     }
 
@@ -163,6 +169,8 @@ namespace prez::task_executors {
 
     void ComputeHeadingToTarget() {
       argos::CVector3 position = positioning_sensor->GetReading().Position;
+      delta_position = (position - last_position).Length();
+      last_position = position;
       argos::CVector3& target_position = prez::GetTargetList()->at(task->target).position;
       argos::CVector3 direction = target_position - position;
       task->target_direction = direction;

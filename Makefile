@@ -14,3 +14,6 @@ clean:
 
 docs: doc/html
 	make -C doc
+
+launch:
+	python3 -m pitone random-choice
