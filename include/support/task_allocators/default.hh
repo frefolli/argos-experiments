@@ -23,7 +23,6 @@ namespace prez::task_allocators {
 
     std::unordered_map<uint32_t, double_t> distances_from_targets;
     double_t max_distance_from_targets;
-    double_t mean_distance_from_targets;
 
     Task* task;
     argos::CRandom::CRNG* random_number_generator;
@@ -42,15 +41,12 @@ namespace prez::task_allocators {
         argos::CRange<uint32_t> target_range(0, targets->size());
         task->target = random_number_generator->Uniform(target_range);
 
-        mean_distance_from_targets = 0.0f;
         max_distance_from_targets = 0.0f;
         argos::CVector3 position = positioning_sensor->GetReading().Position;
         for (uint32_t index = 0; index < targets->size(); ++index) {
           distances_from_targets[index] = (position - targets->at(index).position).Length();
-          mean_distance_from_targets += distances_from_targets[index];
           max_distance_from_targets = std::max(max_distance_from_targets, distances_from_targets[index]);
         }
-        mean_distance_from_targets /= targets->size();
         state = State::VOTING;
       }
       ++voting_sessions;
@@ -69,11 +65,11 @@ namespace prez::task_allocators {
       /** we belong to the target "target" */
       ++formations[task->target];
 
-      //the current target has enough drones assigend to it?
-      if (formations[task->target] >= targets->at(task->target).force) {
+      // if the current target has enough drones assigend to it...
+      if (formations[task->target] > targets->at(task->target).force) {
         for (auto formation : formations) {
           if (formation.first != task->target) {
-            //this target has not enough drones assigend to it?
+            //if this target has not enough drones assigend to it...
             if (formation.second < targets->at(formation.first).force) {
               /** we want a reassignment_probability to this target
                *  that scale with the inverse of the distance to it (normalized) */
@@ -112,7 +108,6 @@ namespace prez::task_allocators {
       voting_sessions = 0;
       distances_from_targets.clear();
       max_distance_from_targets = 0.0f;
-      mean_distance_from_targets = 0.0f;
     }
   };
 }
