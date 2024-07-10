@@ -31,6 +31,7 @@ void prez::SpiriController::Init(argos::TConfigurationNode& /* t_node */) {
   task_allocator.positioning_sensor = GetSensor<argos::CCI_PositioningSensor>("positioning");
   task_allocator.random_number_generator = argos::CRandom::CreateRNG("argos");
   task_allocator.task = &task;
+  task_allocator.Init();
 
   logfile.open(prez::DroneLogfile(GetId()));
   logfile
