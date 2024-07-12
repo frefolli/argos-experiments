@@ -14,6 +14,8 @@
 #include <argos3/plugins/robots/generic/control_interface/ci_positioning_sensor.h>
 #include <cstdint>
 
+#define USE_LP
+
 namespace prez::task_executors {
   class Default : public TaskExecutor {
     static constexpr uint32_t MAX_WAITED_ROUNDS = 20;
@@ -21,8 +23,14 @@ namespace prez::task_executors {
     static constexpr argos::Real IN_METERS = 10e-3;
     static constexpr argos::Real TARGET_DISTANCE = 2.0f;
     static constexpr argos::Real MAX_INTERACTION = 20.0f;
-    static constexpr argos::Real GP_ACCEL = 1.0f;
     static constexpr double_t MAX_COLLISION_AVOIDANCE_DISTANCE = 7.0f;
+    
+    #ifdef USE_GP
+      static constexpr argos::Real GP_ACCEL = 1.0f;
+    #endif
+    #ifdef USE_LP
+      static constexpr argos::Real LP_ACCEL = 0.2f;
+    #endif
 
     public: 
     /* attributes read also by spiri_controller
@@ -94,8 +102,18 @@ namespace prez::task_executors {
     }
 
     argos::Real GravitationalPotential(argos::Real distance) {
-      double_t difference = TARGET_DISTANCE - distance;
-      return - GP_ACCEL * ::abs(difference) / distance;
+      #ifdef USE_GP
+        argos::Real difference = TARGET_DISTANCE - distance;
+        return - GP_ACCEL * ::abs(difference) / distance;
+      #else
+        #ifdef USE_LP
+          argos::Real B = ::pow(TARGET_DISTANCE / distance, 6);
+          argos::Real A = B * B;
+          return (B - A) * LP_ACCEL * 4;
+        #else
+          #error must use at least one of USE_GP, USE_LP
+        #endif
+      #endif
     }
 
     argos::CVector3 AvoidObstacles() {
