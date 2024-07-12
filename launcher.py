@@ -1,5 +1,4 @@
 import os
-import sys
 import itertools
 
 OPTIONS = {
@@ -10,7 +9,8 @@ OPTIONS = {
     'NO_REVIEW',
     'ALWAYS_RANDOM_WHEN_IN_EXCESS',
     'PROBABLE_RANDOM_WHEN_IN_EXCESS'
-  ]
+  ],
+  #'COLLISION_AVOIDANCE_POTENTIAL': ['GP', 'LP']
 }
 
 def product_dict(**kwargs):

@@ -7,17 +7,12 @@
 #include <support/targets.hh>
 #include <support/rab.hh>
 #include <support/task.hh>
+#include <support/setup.hh>
 #include <argos3/core/simulator/simulator.h>
 #include <argos3/core/simulator/space/space.h>
 #include <argos3/plugins/robots/generic/control_interface/ci_range_and_bearing_sensor.h>
 #include <argos3/plugins/robots/generic/control_interface/ci_positioning_sensor.h>
 #include <argos3/core/utility/math/rng.h>
-
-#define PARSE_ENV_SETUP(recipient, value) \
-  if (strcmp(strategy, #value) == 0)      \
-  {                                       \
-    recipient = value;                    \
-  }
 
 namespace prez::task_allocators
 {
