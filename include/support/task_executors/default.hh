@@ -28,7 +28,8 @@ namespace prez::task_executors {
     static constexpr argos::Real LP_ACCEL = 0.2f;
 
     enum CollisionAvoidancePotential {
-      GP, LP
+      GP, /*Inspired by Gravitational Potential*/
+      LP /*Lennard Jones Potential*/
     } collision_avoidance_potential;
 
     public: 
@@ -117,18 +118,18 @@ namespace prez::task_executors {
       return task->target_direction;
     }
 
-    argos::Real GravitationalPotential(argos::Real distance) {
+    argos::Real ApplyCollisionAvoidancePotential(argos::Real distance) {
       switch(collision_avoidance_potential) {
-      case GP: {
-        argos::Real difference = TARGET_DISTANCE - distance;
-        return - GP_ACCEL * ::abs(difference) / distance;
-      };
-      case LP: {
-        argos::Real B = ::pow(TARGET_DISTANCE / distance, 6);
-        argos::Real A = B * B;
-        return (B - A) * LP_ACCEL * 4;
-      };
-    }
+        case GP: {
+          argos::Real difference = TARGET_DISTANCE - distance;
+          return - GP_ACCEL * ::abs(difference) / distance;
+        };
+        case LP: {
+          argos::Real B = ::pow(TARGET_DISTANCE / distance, 6);
+          argos::Real A = B * B;
+          return (B - A) * LP_ACCEL * 4;
+        };
+      }
     }
 
     argos::CVector3 AvoidObstacles() {
@@ -142,7 +143,7 @@ namespace prez::task_executors {
           || neighbour.Data[prez::RABKey::TASK_EXECUTOR_STATE] == State::TAKEN_OFF
           || neighbour.Data[prez::RABKey::TASK_EXECUTOR_STATE] == State::ARRIVED)
           && range < MAX_COLLISION_AVOIDANCE_DISTANCE) {
-          argos::CVector2 avoidance(GravitationalPotential(range), neighbour.HorizontalBearing);
+          argos::CVector2 avoidance(ApplyCollisionAvoidancePotential(range), neighbour.HorizontalBearing);
           n_of_forces++;
           direction += avoidance;
         }
