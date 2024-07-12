@@ -22,7 +22,7 @@ def option_key(conf: dict[str, str]) -> str:
   return "__".join(conf.values())
 
 if __name__ == "__main__":
-  N = 10
+  N = 1
   for conf in product_dict(**OPTIONS):
     destdir = os.path.join("archive/outs", option_key(conf))
     for i in range(1, N + 1):

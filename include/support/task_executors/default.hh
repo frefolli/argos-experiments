@@ -4,6 +4,7 @@
 #include "support/coordination.hh"
 #include <argos3/core/utility/math/angles.h>
 #include <argos3/core/utility/math/vector3.h>
+#include <iostream>
 #include <support/task_executor.hh>
 #include <support/rab.hh>
 #include <support/targets.hh>
@@ -16,12 +17,12 @@
 namespace prez::task_executors {
   class Default : public TaskExecutor {
     static constexpr uint32_t MAX_WAITED_ROUNDS = 20;
-    static constexpr double_t MAX_COLLISION_AVOIDANCE_DISTANCE = 500.0f;
 
-    static constexpr argos::Real TARGETDISTANCE = 500.0f;
-    static constexpr argos::Real MAXINTERACTION = 10.0f;
-    bool singletonDone = false;
-    #define USE_CAD_GLJ
+    static constexpr argos::Real IN_METERS = 10e-3;
+    static constexpr argos::Real TARGET_DISTANCE = 2.0f;
+    static constexpr argos::Real MAX_INTERACTION = 20.0f;
+    static constexpr argos::Real GP_ACCEL = 1.0f;
+    static constexpr double_t MAX_COLLISION_AVOIDANCE_DISTANCE = 7.0f;
 
     public: 
     /* attributes read also by spiri_controller
@@ -56,7 +57,8 @@ namespace prez::task_executors {
       uint32_t waiting_queue = 0;
       const argos::CCI_RangeAndBearingSensor::TReadings neighbours = range_and_bearing_sensor->GetReadings();
       for (argos::CCI_RangeAndBearingSensor::SPacket neighbour : neighbours) {
-        if (neighbour.Range < MAX_COLLISION_AVOIDANCE_DISTANCE) {
+        argos::Real range = neighbour.Range * IN_METERS;
+        if (range < MAX_COLLISION_AVOIDANCE_DISTANCE) {
           if (neighbour.Data[prez::RABKey::ID] > task->id && neighbour.Data[prez::RABKey::TASK_EXECUTOR_STATE] != State::TAKEN_OFF) {
             waiting_queue++;
           }
@@ -84,19 +86,16 @@ namespace prez::task_executors {
 
     argos::CVector3 ApproachTarget() {
       ComputeHeadingToTarget();
-      if (task->target_direction.Length() > MAXINTERACTION) {
-        argos::CVector3 direction = task->target_direction.Normalize() * MAXINTERACTION;
+      if (task->target_direction.Length() > MAX_INTERACTION) {
+        argos::CVector3 direction = task->target_direction.Normalize() * MAX_INTERACTION;
         return direction;
       }
       return task->target_direction;
     }
 
-    argos::Real GravitationalPotential(argos::Real f_distance) {
-      double_t tevere = TARGETDISTANCE - f_distance;
-      if (tevere < 0) {
-        return 0.0f;
-      }
-      return ::abs(tevere) / f_distance;
+    argos::Real GravitationalPotential(argos::Real distance) {
+      double_t difference = TARGET_DISTANCE - distance;
+      return - GP_ACCEL * ::abs(difference) / distance;
     }
 
     argos::CVector3 AvoidObstacles() {
@@ -105,14 +104,14 @@ namespace prez::task_executors {
       const argos::CCI_RangeAndBearingSensor::TReadings neighbours = range_and_bearing_sensor->GetReadings();
       uint32_t n_of_forces = 0;
       for (argos::CCI_RangeAndBearingSensor::SPacket neighbour : neighbours) {
+        argos::Real range = neighbour.Range * IN_METERS;
         if ((neighbour.Data[prez::RABKey::TASK_EXECUTOR_STATE] == State::TAKING_OFF
-          || neighbour.Data[prez::RABKey::TASK_EXECUTOR_STATE] == State::TAKEN_OFF)
-          && neighbour.Range < MAX_COLLISION_AVOIDANCE_DISTANCE) {
-          argos::CVector2 avoidance(
-            GravitationalPotential
-            (neighbour.Range), neighbour.HorizontalBearing);
+          || neighbour.Data[prez::RABKey::TASK_EXECUTOR_STATE] == State::TAKEN_OFF
+          || neighbour.Data[prez::RABKey::TASK_EXECUTOR_STATE] == State::ARRIVED)
+          && range < MAX_COLLISION_AVOIDANCE_DISTANCE) {
+          argos::CVector2 avoidance(GravitationalPotential(range), neighbour.HorizontalBearing);
           n_of_forces++;
-          direction -= avoidance;
+          direction += avoidance;
         }
       }
       if (n_of_forces > 0) {
@@ -120,8 +119,8 @@ namespace prez::task_executors {
         argos::CVector3 avoidance = argos::CVector3(direction.GetX(), direction.GetY(), 0.0f);
         avoidance = avoidance.Rotate(orientation);
         avoidance.SetZ(0.0f);
-        if (avoidance.Length() > MAXINTERACTION) {
-          avoidance = avoidance.Normalize() * MAXINTERACTION;
+        if (avoidance.Length() > MAX_INTERACTION) {
+          avoidance = avoidance.Normalize() * MAX_INTERACTION;
         }
         return avoidance;
       }
@@ -145,9 +144,11 @@ namespace prez::task_executors {
     }
 
     void Arrived() {
-      if(!singletonDone){
-        singletonDone = true;     
-      }
+      argos::CVector3 direction(0.0f, 0.0f, 0.0f);
+      direction += ApproachTarget();
+      direction += AvoidObstacles();
+      task->speed = direction.Length();
+      speed_actuator->SetLinearVelocity(direction);
     }
 
     void Round() {
@@ -164,7 +165,6 @@ namespace prez::task_executors {
     void Reset() {
       state = START;
       waited_rounds = 0;
-      singletonDone=false;
     }
 
     void ComputeHeadingToTarget() {

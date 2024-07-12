@@ -43,7 +43,7 @@
   </loop_functions>
   
   <!-- * Arena configuration * -->
-  <arena size="20, 20, 9" center="0,0,0">
+  <arena size="30, 30, 9" center="0,0,0">
     <distribute>
       <position method="uniform" min="-10,-10,0" max="10,10,0" />
       <orientation method="uniform" min="0,0,0" max="360,0,0" />
@@ -71,7 +71,7 @@
       <user_functions library="builddir/libuser_functions" label="user_function" />
       <camera>
         <placements>
-          <placement index="0" position="0,0,4.34" look_at="0,0,0" up="1,0,0" lens_focal_length="30" />
+          <placement index="0" position="0,0,33" look_at="0,0,0" up="1,0,0" lens_focal_length="30" />
         </placements>
       </camera>
     </qt-opengl>
