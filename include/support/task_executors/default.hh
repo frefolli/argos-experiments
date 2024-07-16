@@ -13,6 +13,7 @@
 #include <argos3/plugins/robots/generic/control_interface/ci_quadrotor_speed_actuator.h>
 #include <argos3/plugins/robots/generic/control_interface/ci_range_and_bearing_sensor.h>
 #include <argos3/plugins/robots/generic/control_interface/ci_positioning_sensor.h>
+#include <argos3/core/utility/math/rng.h>
 #include <cstdint>
 
 namespace prez::task_executors {
@@ -30,7 +31,12 @@ namespace prez::task_executors {
     enum CollisionAvoidancePotential {
       GP, /*Inspired by Gravitational Potential*/
       LP /*Lennard Jones Potential*/
-    } collision_avoidance_potential;
+    } collision_avoidance_potential = GP;
+
+    enum MotionAppliace {
+      NOISELESS, /*doesn't apply noise to SetLinearVelocity*/
+      NOISY, /*applies noise to SetLinearVelocity*/
+    } motion_appliance = NOISELESS;
 
     public: 
     /* attributes read also by spiri_controller
@@ -42,10 +48,11 @@ namespace prez::task_executors {
     uint32_t tick = 0;
     uint32_t waited_rounds = 0;
 
-    Task* task;
-    argos::CCI_PositioningSensor* positioning_sensor;
-    argos::CCI_RangeAndBearingSensor* range_and_bearing_sensor;
-    argos::CCI_QuadRotorSpeedActuator* speed_actuator;
+    Task* task = nullptr;
+    argos::CRandom::CRNG *random_number_generator = nullptr;
+    argos::CCI_PositioningSensor* positioning_sensor = nullptr;
+    argos::CCI_RangeAndBearingSensor* range_and_bearing_sensor = nullptr;
+    argos::CCI_QuadRotorSpeedActuator* speed_actuator = nullptr;
 
     argos::CVector3 last_position;
     double_t delta_position;
@@ -62,9 +69,22 @@ namespace prez::task_executors {
       // std::cout << "Using COLLISION_AVOIDANCE_POTENTIAL = " << collision_avoidance_potential << std::endl;
     }
 
+    inline void ParseMotionAppliance()
+    {
+      motion_appliance = NOISELESS;
+      char *strategy = std::getenv("MOTION_APPLIANCE");
+      if (strategy != nullptr)
+      {
+        PARSE_ENV_SETUP(motion_appliance, NOISELESS);
+        PARSE_ENV_SETUP(motion_appliance, NOISY);
+      }
+      // std::cout << "Using MOTION_APPLIANCE = " << motion_appliance << std::endl;
+    }
+
     void Init()
     {
       ParseCollisionAvoidancePotential();
+      ParseMotionAppliance();
     }
 
     void Start() {
@@ -92,7 +112,7 @@ namespace prez::task_executors {
 
       if (waiting_queue == 0) {
         // speed_actuator->SetRotationalSpeed(argos::CRadians::PI);
-        speed_actuator->SetLinearVelocity({0.0f, 0.0f, 10.0f});
+        SetLinearVelocity({0.0f, 0.0f, 10.0f});
         state = State::TAKING_OFF;
       }
     }
@@ -103,7 +123,7 @@ namespace prez::task_executors {
       // I set and maintain current heading target
       argos::CVector3 current_position = positioning_sensor->GetReading().Position;
       if (current_position.GetZ() >= 1.5f) {
-        speed_actuator->SetLinearVelocity({0.0f, 0.0f, 0.0f});
+        SetLinearVelocity({0.0f, 0.0f, 0.0f});
         state = State::TAKEN_OFF;
         last_position = current_position;
       }
@@ -129,6 +149,8 @@ namespace prez::task_executors {
           argos::Real A = B * B;
           return (B - A) * LP_ACCEL * 4;
         };
+        default:
+          return 0.0f;
       }
     }
 
@@ -166,13 +188,13 @@ namespace prez::task_executors {
       direction += ApproachTarget();
       direction += AvoidObstacles();
       task->speed = direction.Length();
-      speed_actuator->SetLinearVelocity(direction);
+      SetLinearVelocity(direction);
 
       if(delta_position < 10e-4) {
         prez::Coordination::GetInstance().Finished();
         state = State::ARRIVED;
         argos::CVector3 stop(0.0f, 0.0f, 0.0f);
-        speed_actuator->SetLinearVelocity(stop);
+        SetLinearVelocity(stop);
         std::cout << task->id << " going down" << std::endl;
       }
     }
@@ -182,7 +204,7 @@ namespace prez::task_executors {
       direction += ApproachTarget();
       direction += AvoidObstacles();
       task->speed = direction.Length();
-      speed_actuator->SetLinearVelocity(direction);
+      SetLinearVelocity(direction);
     }
 
     void Round() {
@@ -209,6 +231,19 @@ namespace prez::task_executors {
       argos::CVector3 direction = target_position - position;
       task->target_direction = direction;
       task->distance_from_target = direction.Length();
+    }
+
+    void SetLinearVelocity(argos::CVector3 motion) {
+      switch (motion_appliance) {
+        case NOISELESS: {}; break;
+        case NOISY: {
+          motion.SetX(motion.GetX() + random_number_generator->Gaussian(1.0));
+          motion.SetY(motion.GetY() + random_number_generator->Gaussian(1.0));
+          motion.SetZ(motion.GetZ() + random_number_generator->Gaussian(1.0));
+        };
+          default: {}
+        }
+      speed_actuator->SetLinearVelocity(motion);
     }
   };
 }

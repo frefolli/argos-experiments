@@ -2,15 +2,10 @@ import os
 import itertools
 
 OPTIONS = {
-  'INITIAL_CHOICE_STRATEGY': [
-    'RANDOM', 'NEAREST'
-  ],
-  'REVIEW_CHOICE_STRATEGY': [
-    'NO_REVIEW',
-    'ALWAYS_RANDOM_WHEN_IN_EXCESS',
-    'PROBABLE_RANDOM_WHEN_IN_EXCESS'
-  ],
-  #'COLLISION_AVOIDANCE_POTENTIAL': ['GP', 'LP']
+  #'INITIAL_CHOICE_STRATEGY': ['RANDOM', 'NEAREST'],
+  #'REVIEW_CHOICE_STRATEGY': ['NO_REVIEW','ALWAYS_RANDOM_WHEN_IN_EXCESS','PROBABLE_RANDOM_WHEN_IN_EXCESS'],
+  'COLLISION_AVOIDANCE_POTENTIAL': ['GP', 'LP'],
+  'MOTION_APPLIANCE': ['NOISELESS', 'NOISY'],
 }
 
 def product_dict(**kwargs):
@@ -22,7 +17,7 @@ def option_key(conf: dict[str, str]) -> str:
   return "__".join(conf.values())
 
 if __name__ == "__main__":
-  N = 1
+  N = 10
   for conf in product_dict(**OPTIONS):
     destdir = os.path.join("archive/outs", option_key(conf))
     for i in range(1, N + 1):

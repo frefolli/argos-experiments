@@ -25,7 +25,9 @@ void prez::SpiriController::Init(argos::TConfigurationNode& /* t_node */) {
   task_executor.speed_actuator = GetActuator<argos::CCI_QuadRotorSpeedActuator>("quadrotor_speed");
   task_executor.range_and_bearing_sensor = GetSensor<argos::CCI_RangeAndBearingSensor>("range_and_bearing");
   task_executor.positioning_sensor = GetSensor<argos::CCI_PositioningSensor>("positioning");
+  task_executor.random_number_generator = argos::CRandom::CreateRNG("argos");
   task_executor.task = &task;
+  task_executor.Init();
 
   task_allocator.range_and_bearing_sensor = GetSensor<argos::CCI_RangeAndBearingSensor>("range_and_bearing");
   task_allocator.positioning_sensor = GetSensor<argos::CCI_PositioningSensor>("positioning");
