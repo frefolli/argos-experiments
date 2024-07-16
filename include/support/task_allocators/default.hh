@@ -29,9 +29,10 @@ namespace prez::task_allocators
 
     enum ReviewChoiceStrategy
     {
-      NO_REVIEW,                      /* No Review Phase */
-      ALWAYS_RANDOM_WHEN_IN_EXCESS,   /* Always jump to a random target (!= current) when this formation is in excess of force */
-      PROBABLE_RANDOM_WHEN_IN_EXCESS, /* May jump to a random target (!= current) when this formation is in excess of force */
+      NO_REVIEW,                       /* No Review Phase */
+      ALWAYS_RANDOM_WHEN_IN_EXCESS,    /* Always jump to a random target (!= current) when this formation is in excess of force */
+      PROBABLE_RANDOM_WHEN_IN_EXCESS,  /* May jump to a random target (!= current) when this formation is in excess of force */
+      PROBABLE_MINORITY_WHEN_IN_EXCESS /* May jump to the target that have the most shortage of drones assigned to it, when this formation is in excess of force */
     } review_choice_strategy;
     double probability_of_change_in_review;
 
@@ -73,13 +74,16 @@ namespace prez::task_allocators
         PARSE_ENV_SETUP(review_choice_strategy, NO_REVIEW);
         PARSE_ENV_SETUP(review_choice_strategy, ALWAYS_RANDOM_WHEN_IN_EXCESS);
         PARSE_ENV_SETUP(review_choice_strategy, PROBABLE_RANDOM_WHEN_IN_EXCESS);
+        PARSE_ENV_SETUP(review_choice_strategy, PROBABLE_MINORITY_WHEN_IN_EXCESS);
       }
+      // std::cout << "Using REVIEW_CHOICE_STRATEGY = " << review_choice_strategy << std::endl;
       switch (review_choice_strategy)
       {
       case ALWAYS_RANDOM_WHEN_IN_EXCESS:
         probability_of_change_in_review = 1.0f;
         break;
       case PROBABLE_RANDOM_WHEN_IN_EXCESS:
+      case PROBABLE_MINORITY_WHEN_IN_EXCESS:
         probability_of_change_in_review = 0.3f;
         break;
       case NO_REVIEW:
@@ -163,7 +167,7 @@ namespace prez::task_allocators
       case ReviewChoiceStrategy::ALWAYS_RANDOM_WHEN_IN_EXCESS:
       case ReviewChoiceStrategy::PROBABLE_RANDOM_WHEN_IN_EXCESS:
       {
-        // if the current target has enough drones assigend to it...we relocate
+        // if our current target has enough drones assigend to it...we relocate
         if (formations[task->target] > targets->at(task->target).force && random_number_generator->Bernoulli() <= probability_of_change_in_review)
         {
           argos::CRange<uint32_t> target_range(0, targets->size());
@@ -176,6 +180,27 @@ namespace prez::task_allocators
         }
       };
       break;
+      case ReviewChoiceStrategy::PROBABLE_MINORITY_WHEN_IN_EXCESS:
+      {
+        // if our current target has enough drones assigend to it...we relocate tho the squadron/target who has the most need
+        if (formations[task->target] > targets->at(task->target).force && random_number_generator->Bernoulli() <= probability_of_change_in_review)
+        {
+          uint32_t target_most_in_need = -1;
+          argos::Real the_need_of_target_most_in_need = -1;
+          for (uint32_t index = 0; index < targets->size(); ++index)
+          {
+            uint32_t drones_required_to_target = prez::GetTargetList()->at(index).force;
+            uint32_t drones_assigned_to_target = formations[index];
+            argos::Real need = (drones_required_to_target - drones_assigned_to_target) / drones_required_to_target;
+            if (need > the_need_of_target_most_in_need)
+            {
+              the_need_of_target_most_in_need = need;
+              target_most_in_need = index;
+            }
+          }
+          task->target = target_most_in_need; // my target is the most_in_need ->the greatest difference between his required force and his actual force now(normalized)
+        }
+      }
       }
 
       ++reviewing_sessions;
