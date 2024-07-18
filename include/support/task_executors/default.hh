@@ -254,9 +254,7 @@ namespace prez::task_executors
       tick++;
       if (tick == max_iterations)
       {
-        std::cout << "simulation timeout-ed." << std::endl;
-        argos::CSimulator::GetInstance().Terminate();
-        argos::CSimulator::GetInstance().~CSimulator();
+        prez::Coordination::GetInstance().Finished();
       }
 
       switch (state)
