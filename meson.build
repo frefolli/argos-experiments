@@ -18,7 +18,7 @@ support = library('support', [
 ], include_directories: ['./include'], dependencies: [lua, argos3])
 
 controllers = library('controllers', [
-  './src/controllers/spiri_controller.cc'
+  './src/controllers/controller.cc'
 ], include_directories: ['./include'], dependencies: [lua, argos3], link_with: [support])
 
 loop_functions = library('loop_functions', [

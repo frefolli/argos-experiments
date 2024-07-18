@@ -9,7 +9,7 @@
 <argos-configuration>
   <!-- * General configuration * -->
   <framework>
-    <system threads="0" />
+    <system threads="2" />
     <experiment length="0"
       ticks_per_second="10"
       random_seed="0"/>
@@ -17,7 +17,7 @@
 
   <!-- * Controllers * -->
   <controllers>
-    <spiri_controller id="spc" library="builddir/libcontrollers" label="spiri_controller">
+    <controller id="spc" library="builddir/libcontrollers" label="controller">
       <actuators>
         <quadrotor_speed implementation="default"/>
         <range_and_bearing implementation="default"/>
@@ -28,7 +28,7 @@
       </sensors>
       <params>
       </params>
-    </spiri_controller>
+    </controller>
   </controllers>
   
   <!-- * Loop Functions * -->

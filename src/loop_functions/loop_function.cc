@@ -6,6 +6,7 @@
 #include <support/targets.hh>
 #include <support/vectors.hh>
 #include <support/logging.hh>
+#include <support/setup.hh>
 #include <loop_functions/loop_function.hh>
 
 prez::LoopFunction::LoopFunction() : random_number_generator(NULL)
@@ -42,21 +43,25 @@ void prez::LoopFunction::InitializeTargets()
   targets->clear();
   prez::Target new_target;
 
+  #ifdef ENABLE_LOG
   std::ofstream logfile(prez::TargetsLogfile());
   logfile
       << "TargetID,PosX,PosY,PosZ,Force"
       << std::endl;
+  #endif
   for (uint32_t i = 0; i < targets_config.number_of_targets; ++i)
   {
     new_target.position.SetX(random_number_generator->Uniform(position_X_distribution));
     new_target.position.SetY(random_number_generator->Uniform(position_Y_distribution));
     new_target.position.SetZ(random_number_generator->Uniform(position_Z_distribution));
     new_target.force = targets_config.required_target_force;
+    #ifdef ENABLE_LOG
     logfile
         << i << ","
         << new_target.position << ","
         << new_target.force
         << std::endl;
+    #endif
     targets->push_back(new_target);
 
     argos::CLightEntity *le = new argos::CLightEntity(
@@ -66,7 +71,9 @@ void prez::LoopFunction::InitializeTargets()
         1);
     AddEntity(*le);
   }
+  #ifdef ENABLE_LOG
   logfile.close();
+  #endif
 }
 
 using namespace prez;

@@ -30,17 +30,25 @@ namespace prez::task_executors
     static constexpr argos::Real GP_ACCEL = 1.0f;
     static constexpr argos::Real LP_ACCEL = 0.2f;
 
+    static constexpr argos::Real STEADY_LIMIT = 10e-4;
+
     enum CollisionAvoidancePotential
     {
       GP, /*Inspired by Gravitational Potential*/
       LP  /*Lennard Jones Potential*/
     } collision_avoidance_potential = GP;
 
-    enum MotionAppliace
+    enum MotionAppliance
     {
       NOISELESS, /*doesn't apply noise to SetLinearVelocity*/
       NOISY,     /*applies noise to SetLinearVelocity*/
     } motion_appliance = NOISELESS;
+
+    enum TakeOffStrategy
+    {
+      VERTICAL, /*first a vertical take off, then a direct flight*/
+      DIRECT,   /*take off uses flight engine to gain elevation*/
+    } take_off_strategy = VERTICAL;
 
   public:
     /* attributes read also by spiri_controller
@@ -64,8 +72,9 @@ namespace prez::task_executors
     argos::CCI_RangeAndBearingSensor *range_and_bearing_sensor = nullptr;
     argos::CCI_QuadRotorSpeedActuator *speed_actuator = nullptr;
 
-    argos::CVector3 last_position;
-    double_t delta_position;
+    argos::CVector3 last_position = {-1,-1,-1};
+    double_t delta_position = 0;
+    bool already_sprinted = false;
 
     inline void ParseCollisionAvoidancePotential()
     {
@@ -97,7 +106,19 @@ namespace prez::task_executors
       if (strategy != NULL)
         max_iterations = atoi(strategy);
 
-      std::cout << "Using max_iterations = " << max_iterations << std::endl;
+      // std::cout << "Using max_iterations = " << max_iterations << std::endl;
+    }
+
+    inline void ParseTakeOffStrategy()
+    {
+      take_off_strategy = VERTICAL;
+      char *strategy = std::getenv("TAKE_OFF_STRATEGY");
+      if (strategy != nullptr)
+      {
+        PARSE_ENV_SETUP(take_off_strategy, VERTICAL);
+        PARSE_ENV_SETUP(take_off_strategy, DIRECT);
+      }
+      // std::cout << "Using TAKE_OFF_STRATEGY = " << take_off_strategy << std::endl;
     }
 
     void Init()
@@ -105,6 +126,7 @@ namespace prez::task_executors
       ParseCollisionAvoidancePotential();
       ParseMotionAppliance();
       ParseMaxIteration();
+      ParseTakeOffStrategy();
     }
 
     void Start()
@@ -131,7 +153,9 @@ namespace prez::task_executors
         argos::Real range = neighbour.Range * IN_METERS;
         if (range < MAX_COLLISION_AVOIDANCE_DISTANCE)
         {
-          if (neighbour.Data[prez::RABKey::ID] > task->id && neighbour.Data[prez::RABKey::TASK_EXECUTOR_STATE] != State::TAKEN_OFF)
+          if (neighbour.Data[prez::RABKey::ID] > task->id
+           && (neighbour.Data[prez::RABKey::TASK_EXECUTOR_STATE] == State::AT_GROUND
+           || neighbour.Data[prez::RABKey::TASK_EXECUTOR_STATE] == State::TAKING_OFF))
           {
             waiting_queue++;
           }
@@ -140,9 +164,16 @@ namespace prez::task_executors
 
       if (waiting_queue == 0)
       {
-        // speed_actuator->SetRotationalSpeed(argos::CRadians::PI);
-        SetLinearVelocity({0.0f, 0.0f, 10.0f});
-        state = State::TAKING_OFF;
+        switch (take_off_strategy) {
+          case TakeOffStrategy::VERTICAL: {
+            SetLinearVelocity({0.0f, 0.0f, 10.0f});
+            state = State::TAKING_OFF;
+          }; break; 
+          case TakeOffStrategy::DIRECT: {
+            SetLinearVelocity({0.0f, 0.0f, 10.0f});
+            state = State::TAKEN_OFF;
+          }; break; 
+        }
       }
     }
 
@@ -230,7 +261,7 @@ namespace prez::task_executors
       task->speed = direction.Length();
       SetLinearVelocity(direction);
 
-      if (delta_position < 10e-4)
+      if (already_sprinted && delta_position < STEADY_LIMIT)
       {
         prez::Coordination::GetInstance().Finished();
         state = State::ARRIVED;
@@ -286,7 +317,12 @@ namespace prez::task_executors
     void ComputeHeadingToTarget()
     {
       argos::CVector3 position = positioning_sensor->GetReading().Position;
-      delta_position = (position - last_position).Length();
+      if (last_position != argos::CVector3(-1,-1,-1)) {
+        delta_position = (position - last_position).Length();
+      }
+      if (!already_sprinted && delta_position > STEADY_LIMIT) {
+        already_sprinted = true; 
+      }
       last_position = position;
       argos::CVector3 &target_position = prez::GetTargetList()->at(task->target).position;
       argos::CVector3 direction = target_position - position;

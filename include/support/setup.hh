@@ -8,4 +8,6 @@
   {                                       \
     recipient = value;                    \
   }
+
+#define ENABLE_LOG
 #endif//SETUP_HH

@@ -7,7 +7,7 @@
 #include <argos3/plugins/robots/generic/control_interface/ci_positioning_sensor.h>
 #include <argos3/core/simulator/simulator.h>
 #include <argos3/core/simulator/space/space.h>
-#include <controllers/spiri_controller.hh>
+#include <controllers/controller.hh>
 #include <support/targets.hh>
 #include <support/vectors.hh>
 #include <support/logging.hh>
@@ -15,11 +15,11 @@
 #include <string>
 #include <cassert>
 
-prez::SpiriController::SpiriController() :
+prez::Controller::Controller() :
   range_and_bearing_actuator(nullptr)
   {}
 
-void prez::SpiriController::Init(argos::TConfigurationNode& /* t_node */) {
+void prez::Controller::Init(argos::TConfigurationNode& /* t_node */) {
   range_and_bearing_actuator = GetActuator<argos::CCI_RangeAndBearingActuator>("range_and_bearing");
 
   task_executor.speed_actuator = GetActuator<argos::CCI_QuadRotorSpeedActuator>("quadrotor_speed");
@@ -35,18 +35,22 @@ void prez::SpiriController::Init(argos::TConfigurationNode& /* t_node */) {
   task_allocator.task = &task;
   task_allocator.Init();
 
+  #ifdef ENABLE_LOG
   logfile.open(prez::DroneLogfile(GetId()));
   logfile
-    << "Timestamp,PosX,PosY,PosZ,Target,DistanceFromTarget,Speed,TaskAllocatorState,TaskExecutorState"
+    << "Timestamp,PosX,PosY,PosZ,Target,DistanceFromTarget,Speed,TaskAllocatorState,TaskExecutorState,DeltaPosition"
     << std::endl;
+  #endif
   Reset();
 }
 
-void prez::SpiriController::Destroy() {
+void prez::Controller::Destroy() {
+  #ifdef ENABLE_LOG
   logfile.close();
+  #endif
 }
 
-void prez::SpiriController::ControlStep() {
+void prez::Controller::ControlStep() {
   task_allocator.Round();
   task_executor.Round();
   /*we broadcast this (updated) infos with the rab
@@ -56,6 +60,7 @@ void prez::SpiriController::ControlStep() {
   range_and_bearing_actuator->SetData(prez::RABKey::TASK_ALLOCATOR_STATE, task_allocator.state);
   range_and_bearing_actuator->SetData(prez::RABKey::TASK_EXECUTOR_STATE, task_executor.state);
 
+  #ifdef ENABLE_LOG
   // if (task_executor.state != decltype(task_executor)::State::ARRIVED)
     logfile
       << task_executor.tick << ","
@@ -64,11 +69,13 @@ void prez::SpiriController::ControlStep() {
       << task.distance_from_target << ","
       << task.speed << ","
       << task_allocator.state << ","
-      << task_executor.state
+      << task_executor.state << ","
+      << task_executor.delta_position
       << std::endl;
+  #endif
 }
 
-void prez::SpiriController::Reset() {
+void prez::Controller::Reset() {
   task.id = std::stoi(GetId().substr(2));
   task.target = -1;
   task_allocator.Reset();
@@ -76,4 +83,4 @@ void prez::SpiriController::Reset() {
 }
 
 using namespace prez;
-REGISTER_CONTROLLER(SpiriController, "spiri_controller")
+REGISTER_CONTROLLER(Controller, "controller")

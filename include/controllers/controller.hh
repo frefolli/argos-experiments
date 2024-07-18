@@ -12,12 +12,12 @@
 
 namespace prez
 {
-  /** Spiri Controller */
-  class SpiriController : public argos::CCI_Controller
+  /** EyeBot Controller */
+  class Controller : public argos::CCI_Controller
   {
   public:
-    SpiriController();
-    virtual ~SpiriController() {}
+    Controller();
+    virtual ~Controller() {}
 
     virtual void Init(argos::TConfigurationNode &t_node);
     virtual void ControlStep();
@@ -30,8 +30,10 @@ namespace prez
     /** Signals it's state and range to other spiris */
     argos::CCI_RangeAndBearingActuator *range_and_bearing_actuator;
 
+    #ifdef ENABLE_LOG
     /** Logger */
     std::ofstream logfile;
+    #endif
 
     /** Composition over Inheritance */
     Task task;
