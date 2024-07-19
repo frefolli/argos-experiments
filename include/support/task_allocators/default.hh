@@ -8,6 +8,7 @@
 #include <support/rab.hh>
 #include <support/task.hh>
 #include <support/setup.hh>
+#include <support/coordination.hh>
 #include <argos3/core/simulator/simulator.h>
 #include <argos3/core/simulator/space/space.h>
 #include <argos3/plugins/robots/generic/control_interface/ci_range_and_bearing_sensor.h>
@@ -35,6 +36,12 @@ namespace prez::task_allocators
       PROBABLE_MINORITY_WHEN_IN_EXCESS /* May jump to the target that have the most shortage of drones assigned to it, when this formation is in excess of force */
     } review_choice_strategy;
     double probability_of_change_in_review;
+
+    enum IdleAction
+    {
+      NOTHING, /*  */
+      FINISH /*  */
+    } idle_action;
 
     enum State
     {
@@ -92,10 +99,23 @@ namespace prez::task_allocators
       // std::cout << "Using REVIEW_CHOICE_STRATEGY = " << review_choice_strategy << std::endl;
     }
 
+    inline void ParseIdleAction()
+    {
+      idle_action = NOTHING;
+      char *strategy = std::getenv("IDLE_ACTION");
+      if (strategy != nullptr)
+      {
+        PARSE_ENV_SETUP(idle_action, NOTHING);
+        PARSE_ENV_SETUP(idle_action, FINISH);
+      }
+      // std::cout << "Using IDLE_ACTION = " << idle_action << std::endl;
+    }
+
     void Init()
     {
       ParseInitialChoiceStrategy();
       ParseReviewChoiceStrategy();
+      ParseIdleAction();
     }
 
     void Start()
@@ -191,14 +211,16 @@ namespace prez::task_allocators
           {
             uint32_t drones_required_to_target = prez::GetTargetList()->at(index).force;
             uint32_t drones_assigned_to_target = formations[index];
-            argos::Real need = (drones_required_to_target - drones_assigned_to_target) / drones_required_to_target;
+            argos::Real need = ((argos::Real)drones_required_to_target - drones_assigned_to_target) / drones_required_to_target;
             if (need > the_need_of_target_most_in_need)
             {
               the_need_of_target_most_in_need = need;
               target_most_in_need = index;
             }
           }
-          task->target = target_most_in_need; // my target is the most_in_need ->the greatest difference between his required force and his actual force now(normalized)
+          if (target_most_in_need != -1) {
+            task->target = target_most_in_need; // my target is the most_in_need ->the greatest difference between his required force and his actual force now(normalized)
+          }
         }
       }
       }
@@ -207,6 +229,12 @@ namespace prez::task_allocators
       if (reviewing_sessions > MAX_REVIEWING_SESSIONS)
       {
         state = State::IDLE;
+        switch (idle_action) {
+          case NOTHING: {}; break;
+          case FINISH: {
+            prez::Coordination::GetInstance().Finished();
+          }; break;
+        }
       }
       else
       {
