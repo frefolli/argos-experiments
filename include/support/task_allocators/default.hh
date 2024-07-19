@@ -33,6 +33,7 @@ namespace prez::task_allocators
       NO_REVIEW,                       /* No Review Phase */
       ALWAYS_RANDOM_WHEN_IN_EXCESS,    /* Always jump to a random target (!= current) when this formation is in excess of force */
       PROBABLE_RANDOM_WHEN_IN_EXCESS,  /* May jump to a random target (!= current) when this formation is in excess of force */
+      ALWAYS_MINORITY_WHEN_IN_EXCESS,  /* Always jump to the target that have the most shortage of drones assigned to it, when this formation is in excess of force */
       PROBABLE_MINORITY_WHEN_IN_EXCESS /* May jump to the target that have the most shortage of drones assigned to it, when this formation is in excess of force */
     } review_choice_strategy;
     double probability_of_change_in_review;
@@ -81,12 +82,14 @@ namespace prez::task_allocators
         PARSE_ENV_SETUP(review_choice_strategy, NO_REVIEW);
         PARSE_ENV_SETUP(review_choice_strategy, ALWAYS_RANDOM_WHEN_IN_EXCESS);
         PARSE_ENV_SETUP(review_choice_strategy, PROBABLE_RANDOM_WHEN_IN_EXCESS);
+        PARSE_ENV_SETUP(review_choice_strategy, ALWAYS_MINORITY_WHEN_IN_EXCESS);
         PARSE_ENV_SETUP(review_choice_strategy, PROBABLE_MINORITY_WHEN_IN_EXCESS);
       }
       // std::cout << "Using REVIEW_CHOICE_STRATEGY = " << review_choice_strategy << std::endl;
       switch (review_choice_strategy)
       {
       case ALWAYS_RANDOM_WHEN_IN_EXCESS:
+      case ALWAYS_MINORITY_WHEN_IN_EXCESS:
         probability_of_change_in_review = 1.0f;
         break;
       case PROBABLE_RANDOM_WHEN_IN_EXCESS:
@@ -200,6 +203,7 @@ namespace prez::task_allocators
         }
       };
       break;
+      case ReviewChoiceStrategy::ALWAYS_MINORITY_WHEN_IN_EXCESS:
       case ReviewChoiceStrategy::PROBABLE_MINORITY_WHEN_IN_EXCESS:
       {
         // if our current target has enough drones assigend to it...we relocate tho the squadron/target who has the most need
