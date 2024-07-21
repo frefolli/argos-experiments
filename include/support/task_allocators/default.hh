@@ -41,7 +41,7 @@ namespace prez::task_allocators
     enum IdleAction
     {
       NOTHING, /*  */
-      FINISH /*  */
+      FINISH   /*  */
     } idle_action;
 
     enum State
@@ -222,7 +222,8 @@ namespace prez::task_allocators
               target_most_in_need = index;
             }
           }
-          if (target_most_in_need != -1) {
+          if (target_most_in_need != -1)
+          {
             task->target = target_most_in_need; // my target is the most_in_need ->the greatest difference between his required force and his actual force now(normalized)
           }
         }
@@ -233,16 +234,18 @@ namespace prez::task_allocators
       if (reviewing_sessions > MAX_REVIEWING_SESSIONS)
       {
         state = State::IDLE;
-        switch (idle_action) {
-          case NOTHING: {}; break;
-          case FINISH: {
-            prez::Coordination::GetInstance().Finished();
-          }; break;
+        switch (idle_action)
+        {
+        case NOTHING:
+        {
+        };
+        break;
+        case FINISH:
+        {
+          prez::Coordination::GetInstance().Finished();
+        };
+        break;
         }
-      }
-      else
-      {
-        ++reviewing_sessions;
       }
     }
 
