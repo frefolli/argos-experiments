@@ -5,7 +5,7 @@ OPTIONS = {}
 
 def add_executor_stategies():
   OPTIONS.update({
-    'COLLISION_AVOIDANCE_POTENTIAL': ['GP', 'LP'],
+    'COLLISION_AVOIDANCE_POTENTIAL': ['GP', 'LP', 'JP'],
     'MOTION_APPLIANCE': ['NOISELESS', 'NOISY'],
     'TAKE_OFF_STRATEGY': ['VERTICAL','DIRECT'],
   })
@@ -17,8 +17,8 @@ def add_allocator_strategies():
     'REVIEW_CHOICE_STRATEGY': ['NO_REVIEW','PROBABLE_RANDOM_WHEN_IN_EXCESS', 'PROBABLE_MINORITY_WHEN_IN_EXCESS'],
   })
 
-#add_executor_stategies()
-add_allocator_strategies()
+add_executor_stategies()
+#add_allocator_strategies()
 
 def product_dict(**kwargs):
   keys = kwargs.keys()
@@ -34,10 +34,10 @@ def stringify_options(options: dict) -> str:
 if __name__ == "__main__":
   N = 1
   context = {
-    'COLLISION_AVOIDANCE_POTENTIAL': 'LP',
-    'MOTION_APPLIANCE': 'NOISELESS',
-    'TAKE_OFF_STRATEGY': 'VERTICAL',
-    'IDLE_ACTION': 'FINISH'
+    #'COLLISION_AVOIDANCE_POTENTIAL': 'LP',
+    #'MOTION_APPLIANCE': 'NOISELESS',
+    #'TAKE_OFF_STRATEGY': 'VERTICAL',
+    #'IDLE_ACTION': 'FINISH'
   }
   for conf in product_dict(**OPTIONS):
     destdir = os.path.join("archive/outs", option_key(conf))

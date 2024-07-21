@@ -27,14 +27,16 @@ namespace prez::task_executors
     static constexpr argos::Real MAX_INTERACTION = 20.0f;
     static constexpr double_t MAX_COLLISION_AVOIDANCE_DISTANCE = 7.0f;
 
-    static constexpr argos::Real GP_ACCEL = 1.0f;
+    static constexpr argos::Real GP_ACCEL = 4.0f;
+    static constexpr argos::Real JP_ACCEL = 16.0f;
     static constexpr argos::Real LP_ACCEL = 0.2f;
 
     static constexpr argos::Real STEADY_LIMIT = 10e-4;
 
     enum CollisionAvoidancePotential
     {
-      GP, /*Inspired by Gravitational Potential*/
+      GP, /*Inspired by Gravitational Potential with ABS*/
+      JP, /*Inspired by Gravitational Potential without ABS*/
       LP  /*Lennard Jones Potential*/
     } collision_avoidance_potential = GP;
 
@@ -83,6 +85,7 @@ namespace prez::task_executors
       if (strategy != nullptr)
       {
         PARSE_ENV_SETUP(collision_avoidance_potential, GP);
+        PARSE_ENV_SETUP(collision_avoidance_potential, JP);
         PARSE_ENV_SETUP(collision_avoidance_potential, LP);
       }
       // std::cout << "Using COLLISION_AVOIDANCE_POTENTIAL = " << collision_avoidance_potential << std::endl;
@@ -210,6 +213,11 @@ namespace prez::task_executors
       {
         argos::Real difference = TARGET_DISTANCE - distance;
         return -GP_ACCEL * ::abs(difference) / distance;
+      };
+      case JP:
+      {
+        argos::Real difference = TARGET_DISTANCE - distance;
+        return -JP_ACCEL * difference / (distance * distance);
       };
       case LP:
       {
