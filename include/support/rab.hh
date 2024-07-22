@@ -7,7 +7,7 @@ namespace prez {
    * */
   enum RABKey {
     ID = 0,
-    SQUADRON,
+    TARGET,
     TASK_ALLOCATOR_STATE,
     TASK_EXECUTOR_STATE
   };

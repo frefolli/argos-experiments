@@ -9,15 +9,15 @@
 <argos-configuration>
   <!-- * General configuration * -->
   <framework>
-    <system threads="0" />
+    <system threads="4" />
     <experiment length="0"
-                ticks_per_second="10"
-                random_seed="1717" />
+      ticks_per_second="10"
+      random_seed="12400"/>
   </framework>
 
   <!-- * Controllers * -->
   <controllers>
-    <spiri_controller id="spc" library="builddir/libcontrollers" label="spiri_controller">
+    <controller id="spc" library="builddir/libcontrollers" label="controller">
       <actuators>
         <quadrotor_speed implementation="default"/>
         <range_and_bearing implementation="default"/>
@@ -28,27 +28,26 @@
       </sensors>
       <params>
       </params>
-    </spiri_controller>
+    </controller>
   </controllers>
   
   <!-- * Loop Functions * -->
   <loop_functions library="builddir/libloop_functions"
                   label="loop_function">
-    <squadrons
+    <targets
       minimum_position="-10,-10,2"
       maximum_position="10,10,3"
-      minimum_force="5"
-      maximum_force="7"
-      number_of_squadrons="5"
+      number_of_targets="5"
+      required_target_force="4"
     />
   </loop_functions>
-
+  
   <!-- * Arena configuration * -->
-  <arena size="20, 20, 9" center="0,0,0">
+  <arena size="30, 30, 9" center="0,0,0">
     <distribute>
       <position method="uniform" min="-10,-10,0" max="10,10,0" />
       <orientation method="uniform" min="0,0,0" max="360,0,0" />
-      <entity quantity="30" max_trials="10">
+      <entity quantity="20" max_trials="10">
         <eye-bot id="sp" rab_range="100000" rab_data_size="112">
           <controller config="spc" />
         </eye-bot>
@@ -69,9 +68,10 @@
   <!-- * Visualization * -->
   <visualization>
     <qt-opengl>
+      <user_functions library="builddir/libuser_functions" label="user_function" />
       <camera>
         <placements>
-          <placement index="0" position="0,0,4.34" look_at="0,0,0" up="1,0,0" lens_focal_length="30" />
+          <placement index="0" position="0,0,33" look_at="0,0,0" up="1,0,0" lens_focal_length="30" />
         </placements>
       </camera>
     </qt-opengl>

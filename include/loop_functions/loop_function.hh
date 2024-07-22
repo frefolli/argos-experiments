@@ -11,22 +11,23 @@ namespace prez {
       LoopFunction();
       virtual ~LoopFunction() {}
       virtual void Init(argos::TConfigurationNode& t_tree);
+      /* This method restore the state of the simulation at it was right after Init() was called
+      */
       virtual void Reset();
 
     private:
-      void InitializeSquadrons();
+      void InitializeTargets();
     
       argos::CRandom::CRNG* random_number_generator;
       
-      /** Configuration for Squadron Initialization */
-      struct Squadrons {
-        uint32_t number_of_squadrons = 4;
-        uint32_t minimum_force = 5;
-        uint32_t maximum_force = 7;
+      /** Configuration for Target Initialization. Just used in InitializeTargets. */
+      struct Targets {
+        uint32_t number_of_targets;
+        uint32_t required_target_force;
         argos::CVector3 minimum_position;
         argos::CVector3 maximum_position;
-      } squadrons_config;
-      void ConfigureSquadrons(argos::TConfigurationNode& config);
+      } targets_config;
+      void ConfigureTargets(argos::TConfigurationNode& config);
   };
 }
 #endif
