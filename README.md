@@ -10,13 +10,9 @@ git clone https://github.com/ilpincy/argos3.git argos3
 
 cd argos3
 
-mkdir build_simulator
-
-cd build_simulator
-
-cmake ../src
-
-make
+sudo make doc 
+sudo make package
+sudo make install
 
 in the project's directory:
 
